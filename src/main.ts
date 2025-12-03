@@ -35,7 +35,7 @@ async function bootstrap() {
     : ['http://localhost:3000', 'http://localhost:3001', 'http://35.32.91.174:3002'];
   
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
       if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
