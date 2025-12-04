@@ -5,23 +5,42 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 async function runMigrations() {
-  // Check if database variables are set
-  const dbHost = process.env.DB_HOST;
-  const dbPort = process.env.DB_PORT;
-  const dbUsername = process.env.DB_USERNAME;
-  const dbPassword = process.env.DB_PASSWORD;
-  const dbName = process.env.DB_NAME;
+  // Check if database variables are set (strict check for undefined, null, or empty string)
+  const dbHost = process.env.DB_HOST?.trim();
+  const dbPort = process.env.DB_PORT?.trim();
+  const dbUsername = process.env.DB_USERNAME?.trim();
+  const dbPassword = process.env.DB_PASSWORD?.trim();
+  const dbName = process.env.DB_NAME?.trim();
+
+  console.log('🔍 Checking database environment variables...');
+  console.log(`  DB_HOST: ${dbHost || '❌ NOT SET'}`);
+  console.log(`  DB_PORT: ${dbPort || '❌ NOT SET'}`);
+  console.log(`  DB_USERNAME: ${dbUsername || '❌ NOT SET'}`);
+  console.log(`  DB_PASSWORD: ${dbPassword ? '✅ SET' : '❌ NOT SET'}`);
+  console.log(`  DB_NAME: ${dbName || '❌ NOT SET'}`);
 
   if (!dbHost || !dbPort || !dbUsername || !dbPassword || !dbName) {
-    console.error('❌ Database environment variables are not set!');
+    console.error('\n❌ Database environment variables are not set!');
     console.error('Required variables: DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME');
-    console.error('Current values:');
-    console.error(`  DB_HOST: ${dbHost || 'NOT SET'}`);
-    console.error(`  DB_PORT: ${dbPort || 'NOT SET'}`);
-    console.error(`  DB_USERNAME: ${dbUsername || 'NOT SET'}`);
-    console.error(`  DB_PASSWORD: ${dbPassword ? '***' : 'NOT SET'}`);
-    console.error(`  DB_NAME: ${dbName || 'NOT SET'}`);
-    console.error('\nPlease set these variables in Railway before deploying.');
+    console.error('\n📋 How to fix:');
+    console.error('1. Go to Railway → Your Backend Service → Variables tab');
+    console.error('2. Add a PostgreSQL service if you haven\'t already');
+    console.error('3. Link the PostgreSQL service to your backend service');
+    console.error('4. Or manually add these variables from your PostgreSQL service:');
+    console.error('   - DB_HOST (from PGHOST)');
+    console.error('   - DB_PORT (from PGPORT)');
+    console.error('   - DB_USERNAME (from PGUSER)');
+    console.error('   - DB_PASSWORD (from PGPASSWORD)');
+    console.error('   - DB_NAME (from PGDATABASE)');
+    console.error('\n⚠️  The app cannot start without these variables!');
+    process.exit(1);
+  }
+
+  // Check if trying to connect to localhost (common mistake)
+  if (dbHost === 'localhost' || dbHost === '127.0.0.1' || dbHost === '::1') {
+    console.error('\n❌ DB_HOST is set to localhost!');
+    console.error('This will not work in Railway. You need to use your Railway PostgreSQL host.');
+    console.error('Please set DB_HOST to your Railway PostgreSQL service hostname.');
     process.exit(1);
   }
 
