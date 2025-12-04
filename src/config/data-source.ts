@@ -13,6 +13,7 @@ export const AppDataSource = new DataSource({
   logging: true,
   entities: [__dirname + '/../**/*.entity.{js,ts}'],
   migrations: [__dirname + '/../database/migrations/*.{js,ts}'],
+  migrationsTableName: 'migrations',
   subscribers: [],
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 }); 
