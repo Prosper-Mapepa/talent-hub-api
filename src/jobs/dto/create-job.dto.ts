@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsArray } from 'class-validator';
 import { JobType } from '../enums/job-type.enum';
 import { ExperienceLevel } from '../enums/experience-level.enum';
 
@@ -28,4 +28,19 @@ export class CreateJobDto {
   @IsString()
   @IsOptional()
   salary?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  requirements?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  responsibilities?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  benefits?: string[];
 } 

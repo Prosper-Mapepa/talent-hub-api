@@ -19,12 +19,16 @@ import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { Response } from 'express';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
+import { JobsService } from '../jobs/jobs.service';
+import { Req } from '@nestjs/common';
+import { Request } from 'express';
 
 @ApiTags('Businesses')
 @Controller('businesses')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({
   description: 'Authentication required',
@@ -45,7 +49,10 @@ import { UserRole } from '../users/enums/user-role.enum';
   }
 })
 export class BusinessesController {
-  constructor(private readonly businessesService: BusinessesService) {}
+  constructor(
+    private readonly businessesService: BusinessesService,
+    private readonly jobsService: JobsService,
+  ) {}
 
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
@@ -139,8 +146,51 @@ export class BusinessesController {
     return res.json({ data: result });
   }
 
+  @Get('jobs')
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS)
+  @ApiOperation({ 
+    summary: 'Get jobs for current business',
+    description: 'Retrieve all job postings for the authenticated business user'
+  })
+  @ApiOkResponse({
+    description: 'Jobs retrieved successfully',
+    schema: {
+      example: [
+        {
+          id: 'job-uuid-1',
+          title: 'Junior Full Stack Developer',
+          description: 'We are looking for a passionate junior developer to join our team',
+          type: 'FULL_TIME',
+          experienceLevel: 'ENTRY_LEVEL',
+          business: {
+            id: 'business-uuid',
+            businessName: 'TechCorp Solutions'
+          },
+          applications: []
+        }
+      ]
+    }
+  })
+  async getBusinessJobs(@Req() req: Request, @Res() res: Response) {
+    // Get business from user
+    const user = (req as any).user;
+    if (!user || !user.userId) {
+      throw new NotFoundException({ message: 'User not found', errors: { userId: ['User does not exist'] } });
+    }
+    
+    // Find business by userId
+    const business = await this.businessesService.findByUserId(user.userId);
+    if (!business) {
+      throw new NotFoundException({ message: 'Business profile not found', errors: { businessId: ['Business does not exist for this user'] } });
+    }
+    
+    const jobs = await this.jobsService.findByBusinessId(business.id);
+    res.locals.message = 'Jobs retrieved successfully';
+    return res.json({ data: jobs });
+  }
+
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.STUDENT)
+  @Roles(UserRole.ADMIN, UserRole.STUDENT, UserRole.BUSINESS)
   @ApiOperation({ 
     summary: 'Get all businesses',
     description: 'Retrieve a list of all businesses with their profiles'
@@ -363,4 +413,5 @@ export class BusinessesController {
     res.locals.message = 'Business deleted successfully';
     return res.json({ data: null });
   }
+
 } 

@@ -21,6 +21,7 @@ import { UpdateJobDto } from './dto/update-job.dto';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { Response } from 'express';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/enums/user-role.enum';
 
@@ -275,6 +276,7 @@ export class JobsController {
   }
 
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
   @ApiOperation({ 
@@ -468,6 +470,69 @@ export class JobsController {
   async createApplication(@Body() dto: CreateApplicationDto, @Res() res: Response) {
     const result = await this.jobsService.createApplication(dto);
     res.locals.message = 'Application submitted successfully';
+    return res.json({ data: result });
+  }
+
+  @Patch('applications/:id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @UsePipes(new ValidationPipe({ whitelist: true }))
+  @Roles(UserRole.ADMIN, UserRole.BUSINESS)
+  @ApiOperation({ 
+    summary: 'Update application status',
+    description: 'Update the status of a job application (accept, reject, etc.)'
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Application unique identifier',
+    example: 'uuid'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['PENDING', 'REVIEWED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
+          example: 'ACCEPTED'
+        }
+      },
+      required: ['status']
+    }
+  })
+  @ApiOkResponse({
+    description: 'Application status updated successfully',
+    schema: {
+      example: {
+        id: 'application-uuid',
+        status: 'ACCEPTED',
+        student: {
+          id: 'student-uuid',
+          firstName: 'John',
+          lastName: 'Doe'
+        },
+        job: {
+          id: 'job-uuid',
+          title: 'Junior Full Stack Developer'
+        }
+      }
+    }
+  })
+  @ApiNotFoundResponse({
+    description: 'Application not found',
+    schema: {
+      example: {
+        success: false,
+        message: 'Application not found'
+      }
+    }
+  })
+  async updateApplicationStatus(
+    @Param('id') id: string,
+    @Body('status') status: string,
+    @Res() res: Response
+  ) {
+    const result = await this.jobsService.updateApplicationStatus(id, status);
+    res.locals.message = 'Application status updated successfully';
     return res.json({ data: result });
   }
 } 

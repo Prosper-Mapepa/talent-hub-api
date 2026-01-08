@@ -22,10 +22,11 @@ import { Response } from 'express';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from './enums/user-role.enum';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({
   description: 'Authentication required',
@@ -164,6 +165,155 @@ export class UsersController {
     const data = users.map(({ password, ...rest }) => rest as UserResponseDto);
     res.locals.message = 'Users retrieved successfully';
     return res.json({ data });
+  }
+
+  // Follow/Unfollow Endpoints - MUST be before parameterized routes
+  @Post('follow')
+  @ApiOperation({ 
+    summary: 'Follow a user',
+    description: 'Follow another user by their ID'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        followerId: { type: 'string', example: 'uuid' },
+        followingId: { type: 'string', example: 'uuid' },
+      },
+      required: ['followerId', 'followingId'],
+    },
+  })
+  @ApiOkResponse({
+    description: 'Successfully followed user',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 'uuid',
+          followerId: 'uuid',
+          followingId: 'uuid',
+          createdAt: '2024-01-15T10:30:00.000Z',
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid request (e.g., trying to follow yourself)',
+  })
+  async follow(@Body() body: { followerId: string; followingId: string }, @Res() res: Response) {
+    try {
+      const follow = await this.usersService.followUser(body.followerId, body.followingId);
+      res.locals.message = 'Successfully followed user';
+      return res.json({ data: follow });
+    } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || 'Failed to follow user');
+    }
+  }
+
+  @Post('unfollow')
+  @ApiOperation({ 
+    summary: 'Unfollow a user',
+    description: 'Unfollow another user by their ID'
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        followerId: { type: 'string', example: 'uuid' },
+        followingId: { type: 'string', example: 'uuid' },
+      },
+      required: ['followerId', 'followingId'],
+    },
+  })
+  @ApiOkResponse({
+    description: 'Successfully unfollowed user',
+    schema: {
+      example: {
+        success: true,
+        data: null,
+      },
+    },
+  })
+  async unfollow(@Body() body: { followerId: string; followingId: string }, @Res() res: Response) {
+    try {
+      await this.usersService.unfollowUser(body.followerId, body.followingId);
+      res.locals.message = 'Successfully unfollowed user';
+      return res.json({ data: null });
+    } catch (error: any) {
+      throw new BadRequestException(error.message || 'Failed to unfollow user');
+    }
+  }
+
+  // Alternative endpoint pattern: /users/:userId/follow (for mobile app fallback)
+  @Post(':userId/follow')
+  @ApiOperation({ 
+    summary: 'Follow a user (alternative endpoint)',
+    description: 'Follow another user using userId in path'
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID of the follower',
+    example: 'uuid',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        followingId: { type: 'string', example: 'uuid' },
+      },
+      required: ['followingId'],
+    },
+  })
+  @ApiOkResponse({
+    description: 'Successfully followed user',
+  })
+  async followAlternative(@Param('userId') followerId: string, @Body() body: { followingId: string }, @Res() res: Response) {
+    try {
+      const follow = await this.usersService.followUser(followerId, body.followingId);
+      res.locals.message = 'Successfully followed user';
+      return res.json({ data: follow });
+    } catch (error: any) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || 'Failed to follow user');
+    }
+  }
+
+  // Alternative endpoint pattern: /users/:userId/unfollow (for mobile app fallback)
+  @Post(':userId/unfollow')
+  @ApiOperation({ 
+    summary: 'Unfollow a user (alternative endpoint)',
+    description: 'Unfollow another user using userId in path'
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID of the follower',
+    example: 'uuid',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        followingId: { type: 'string', example: 'uuid' },
+      },
+      required: ['followingId'],
+    },
+  })
+  @ApiOkResponse({
+    description: 'Successfully unfollowed user',
+  })
+  async unfollowAlternative(@Param('userId') followerId: string, @Body() body: { followingId: string }, @Res() res: Response) {
+    try {
+      await this.usersService.unfollowUser(followerId, body.followingId);
+      res.locals.message = 'Successfully unfollowed user';
+      return res.json({ data: null });
+    } catch (error: any) {
+      throw new BadRequestException(error.message || 'Failed to unfollow user');
+    }
   }
 
   @Get(':id')
@@ -327,5 +477,84 @@ export class UsersController {
     await this.usersService.remove(id);
     res.locals.message = 'User deleted successfully';
     return res.json({ data: null });
+  }
+
+  @Get(':userId/followers')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ 
+    summary: 'Get user followers',
+    description: 'Get a list of users who follow the specified user'
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID to get followers for',
+    example: 'uuid',
+  })
+  @ApiOkResponse({
+    description: 'Followers retrieved successfully',
+    type: [UserResponseDto],
+  })
+  async getFollowers(@Param('userId') userId: string, @Res() res: Response) {
+    const followers = await this.usersService.getFollowers(userId);
+    const data = followers.map(({ password, ...rest }) => rest as UserResponseDto);
+    res.locals.message = 'Followers retrieved successfully';
+    return res.json({ data });
+  }
+
+  @Get(':userId/following')
+  @ApiOperation({ 
+    summary: 'Get users being followed',
+    description: 'Get a list of users that the specified user is following'
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'User ID to get following list for',
+    example: 'uuid',
+  })
+  @ApiOkResponse({
+    description: 'Following list retrieved successfully',
+    type: [UserResponseDto],
+  })
+  async getFollowing(@Param('userId') userId: string, @Res() res: Response) {
+    const following = await this.usersService.getFollowing(userId);
+    const data = following.map(({ password, ...rest }) => rest as UserResponseDto);
+    res.locals.message = 'Following list retrieved successfully';
+    return res.json({ data });
+  }
+
+  @Get(':followerId/following/:followingId')
+  @ApiOperation({ 
+    summary: 'Check follow status',
+    description: 'Check if one user is following another'
+  })
+  @ApiParam({
+    name: 'followerId',
+    description: 'User ID of the follower',
+    example: 'uuid',
+  })
+  @ApiParam({
+    name: 'followingId',
+    description: 'User ID of the user being followed',
+    example: 'uuid',
+  })
+  @ApiOkResponse({
+    description: 'Follow status retrieved successfully',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          isFollowing: true,
+        },
+      },
+    },
+  })
+  async checkFollowStatus(
+    @Param('followerId') followerId: string,
+    @Param('followingId') followingId: string,
+    @Res() res: Response,
+  ) {
+    const isFollowing = await this.usersService.checkFollowStatus(followerId, followingId);
+    res.locals.message = 'Follow status retrieved successfully';
+    return res.json({ data: { isFollowing } });
   }
 } 

@@ -15,6 +15,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '../users/entities/user.entity';
 import { UpdateSkillDto } from './dto/update-skill.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('students')
 @UseGuards(JwtAuthGuard)
@@ -27,9 +28,13 @@ export class StudentsController {
   }
 
   // Get all talents (for browsing) - must come before :id routes
+  // Made public so talents can be browsed without authentication
   @Get('talents/all')
-  getAllTalents() {
-    return this.studentsService.getAllTalents();
+  @Public()
+  async getAllTalents() {
+    const talents = await this.studentsService.getAllTalents();
+    console.log(`[getAllTalents] Returning ${talents?.length || 0} talents`);
+    return talents;
   }
 
   @Get(':id')

@@ -249,10 +249,12 @@ export class StudentsService {
   }
 
   async getAllTalents(): Promise<StudentTalent[]> {
-    return this.talentsRepository.find({
-      relations: ['student'],
+    const talents = await this.talentsRepository.find({
+      relations: ['student', 'student.user'],
       order: { createdAt: 'DESC' },
     });
+    console.log(`[StudentsService.getAllTalents] Found ${talents?.length || 0} talents in database`);
+    return talents || [];
   }
 
   // New social features methods

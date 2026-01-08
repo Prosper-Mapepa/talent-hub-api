@@ -29,6 +29,15 @@ export class Job {
   @Column({ nullable: true })
   salary: string;
 
+  @Column({ type: 'text', array: true, nullable: true })
+  requirements: string[];
+
+  @Column({ type: 'text', array: true, nullable: true })
+  responsibilities: string[];
+
+  @Column({ type: 'text', array: true, nullable: true })
+  benefits: string[];
+
   @ManyToOne(() => Business)
   @JoinColumn({ name: 'business_id' })
   business: Business;

@@ -111,4 +111,18 @@ export class JobsService {
     });
     return jobs.map(job => ({ ...job, applications: job.applications ?? [] }));
   }
+
+  async updateApplicationStatus(applicationId: string, status: string): Promise<Application> {
+    const application = await this.applicationRepository.findOne({
+      where: { id: applicationId },
+      relations: ['student', 'job']
+    });
+    
+    if (!application) {
+      throw new NotFoundException('Application not found');
+    }
+    
+    application.status = status as any;
+    return this.applicationRepository.save(application);
+  }
 } 
