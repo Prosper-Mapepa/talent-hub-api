@@ -67,6 +67,10 @@ export class StudentsService {
     return this.studentsRepository.save(student);
   }
 
+  async remove(id: string): Promise<void> {
+    await this.studentsRepository.delete(id);
+  }
+
   async findByUserId(userId: string): Promise<Student> {
     const student = await this.studentsRepository.findOne({
       where: { user: { id: userId } },

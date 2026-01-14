@@ -163,4 +163,36 @@ export class AuthService {
       message: 'Business registered successfully',
     };
   }
+
+  async deleteAccount(userId: string): Promise<void> {
+    // Get user to determine role
+    const user = await this.usersService.findOne(userId);
+    if (!user) {
+      return; // User doesn't exist, nothing to delete
+    }
+
+    // Delete related student or business record first to avoid foreign key constraint
+    if (user.role === UserRole.STUDENT) {
+      try {
+        const student = await this.studentsService.findByUserId(userId);
+        if (student) {
+          await this.studentsService.remove(student.id);
+        }
+      } catch (error) {
+        // Student might not exist, continue with user deletion
+      }
+    } else if (user.role === UserRole.BUSINESS) {
+      try {
+        const business = await this.businessesService.findByUserId(userId);
+        if (business) {
+          await this.businessesService.remove(business.id);
+        }
+      } catch (error) {
+        // Business might not exist, continue with user deletion
+      }
+    }
+
+    // Now delete the user
+    await this.usersService.remove(userId);
+  }
 } 

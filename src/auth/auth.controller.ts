@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UsePipes, ValidationPipe, Res } from '@nestjs/common';
+import { Controller, Post, Delete, Body, UsePipes, ValidationPipe, Res, UseGuards } from '@nestjs/common';
 import { 
   ApiTags, 
   ApiOperation, 
@@ -7,7 +7,9 @@ import {
   ApiBadRequestResponse, 
   ApiUnauthorizedResponse,
   ApiConflictResponse,
-  ApiCreatedResponse
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiBearerAuth
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -16,6 +18,8 @@ import { RegisterBusinessDto } from './dto/register-business.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { Response } from 'express';
 import { Public } from './decorators/public.decorator';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -274,5 +278,30 @@ export class AuthController {
     const result = await this.authService.registerBusiness(dto);
     res.locals.message = 'Business registered successfully';
     return res.json(result);
+  }
+
+  @Delete('delete-account')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ 
+    summary: 'Delete own account',
+    description: 'Permanently delete the authenticated user\'s account'
+  })
+  @ApiNoContentResponse({
+    description: 'Account deleted successfully'
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Authentication required',
+    schema: {
+      example: {
+        success: false,
+        message: 'Unauthorized - Authentication required'
+      }
+    }
+  })
+  async deleteAccount(@CurrentUser() user: any, @Res() res: Response) {
+    await this.authService.deleteAccount(user.userId);
+    res.locals.message = 'Account deleted successfully';
+    return res.json({ data: null });
   }
 } 
