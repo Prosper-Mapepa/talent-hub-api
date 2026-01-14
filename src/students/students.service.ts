@@ -1,12 +1,19 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, ArrayOverlap, Not } from 'typeorm';
 import { Student } from './entities/student.entity';
 import { Project } from './entities/project.entity';
 import { Achievement } from './entities/achievement.entity';
 import { StudentTalent } from './entities/talent.entity';
 import { Skill } from './entities/skill.entity';
-import { Collaboration, CollaborationStatus } from './entities/collaboration.entity';
+import {
+  Collaboration,
+  CollaborationStatus,
+} from './entities/collaboration.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateAchievementDto } from './dto/create-achievement.dto';
 import { CreateTalentDto } from './dto/create-talent.dto';
@@ -61,7 +68,10 @@ export class StudentsService {
     return student;
   }
 
-  async update(id: string, updateStudentDto: UpdateStudentDto): Promise<Student> {
+  async update(
+    id: string,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<Student> {
     const student = await this.findOne(id);
     Object.assign(student, updateStudentDto);
     return this.studentsRepository.save(student);
@@ -83,14 +93,20 @@ export class StudentsService {
   }
 
   // Projects methods
-  async addProject(studentId: string, createProjectDto: CreateProjectDto, files?: any): Promise<Project> {
+  async addProject(
+    studentId: string,
+    createProjectDto: CreateProjectDto,
+    files?: any,
+  ): Promise<Project> {
     const student = await this.findOne(studentId);
     let images: string[] = [];
-    
+
     if (files && files.files) {
-      images = files.files.map((file: any) => `/uploads/projects/${file.filename}`);
+      images = files.files.map(
+        (file: any) => `/uploads/projects/${file.filename}`,
+      );
     }
-    
+
     const project = this.projectsRepository.create({
       ...createProjectDto,
       images,
@@ -99,19 +115,26 @@ export class StudentsService {
     return this.projectsRepository.save(project);
   }
 
-  async updateProject(studentId: string, projectId: string, updateProjectDto: CreateProjectDto, files?: any): Promise<Project> {
+  async updateProject(
+    studentId: string,
+    projectId: string,
+    updateProjectDto: CreateProjectDto,
+    files?: any,
+  ): Promise<Project> {
     const project = await this.projectsRepository.findOne({
       where: { id: projectId, student: { id: studentId } },
     });
     if (!project) {
       throw new NotFoundException('Project not found');
     }
-    
+
     let images: string[] = project.images || [];
     if (files && files.files) {
-      images = files.files.map((file: any) => `/uploads/projects/${file.filename}`);
+      images = files.files.map(
+        (file: any) => `/uploads/projects/${file.filename}`,
+      );
     }
-    
+
     Object.assign(project, { ...updateProjectDto, images });
     return this.projectsRepository.save(project);
   }
@@ -127,14 +150,20 @@ export class StudentsService {
   }
 
   // Achievements methods
-  async addAchievement(studentId: string, createAchievementDto: CreateAchievementDto, files?: any): Promise<Achievement> {
+  async addAchievement(
+    studentId: string,
+    createAchievementDto: CreateAchievementDto,
+    files?: any,
+  ): Promise<Achievement> {
     const student = await this.findOne(studentId);
     let fileArr: string[] = [];
-    
+
     if (files && files.files) {
-      fileArr = files.files.map((file: any) => `/uploads/achievements/${file.filename}`);
+      fileArr = files.files.map(
+        (file: any) => `/uploads/achievements/${file.filename}`,
+      );
     }
-    
+
     const achievement = this.achievementsRepository.create({
       ...createAchievementDto,
       files: fileArr,
@@ -143,24 +172,34 @@ export class StudentsService {
     return this.achievementsRepository.save(achievement);
   }
 
-  async updateAchievement(studentId: string, achievementId: string, updateAchievementDto: CreateAchievementDto, files?: any): Promise<Achievement> {
+  async updateAchievement(
+    studentId: string,
+    achievementId: string,
+    updateAchievementDto: CreateAchievementDto,
+    files?: any,
+  ): Promise<Achievement> {
     const achievement = await this.achievementsRepository.findOne({
       where: { id: achievementId, student: { id: studentId } },
     });
     if (!achievement) {
       throw new NotFoundException('Achievement not found');
     }
-    
+
     let fileArr: string[] = achievement.files || [];
     if (files && files.files) {
-      fileArr = files.files.map((file: any) => `/uploads/achievements/${file.filename}`);
+      fileArr = files.files.map(
+        (file: any) => `/uploads/achievements/${file.filename}`,
+      );
     }
-    
+
     Object.assign(achievement, { ...updateAchievementDto, files: fileArr });
     return this.achievementsRepository.save(achievement);
   }
 
-  async removeAchievement(studentId: string, achievementId: string): Promise<void> {
+  async removeAchievement(
+    studentId: string,
+    achievementId: string,
+  ): Promise<void> {
     const achievement = await this.achievementsRepository.findOne({
       where: { id: achievementId, student: { id: studentId } },
     });
@@ -171,14 +210,20 @@ export class StudentsService {
   }
 
   // Talents methods
-  async addTalent(studentId: string, createTalentDto: CreateTalentDto, files?: any): Promise<StudentTalent> {
+  async addTalent(
+    studentId: string,
+    createTalentDto: CreateTalentDto,
+    files?: any,
+  ): Promise<StudentTalent> {
     const student = await this.findOne(studentId);
     let filePaths: string[] = [];
-    
+
     if (files && files.files) {
-      filePaths = files.files.map((file: any) => `/uploads/talents/${file.filename}`);
+      filePaths = files.files.map(
+        (file: any) => `/uploads/talents/${file.filename}`,
+      );
     }
-    
+
     const talent = this.talentsRepository.create({
       ...createTalentDto,
       files: filePaths,
@@ -187,19 +232,26 @@ export class StudentsService {
     return this.talentsRepository.save(talent);
   }
 
-  async updateTalent(studentId: string, talentId: string, updateTalentDto: UpdateTalentDto, files?: any): Promise<StudentTalent> {
+  async updateTalent(
+    studentId: string,
+    talentId: string,
+    updateTalentDto: UpdateTalentDto,
+    files?: any,
+  ): Promise<StudentTalent> {
     const talent = await this.talentsRepository.findOne({
       where: { id: talentId, student: { id: studentId } },
     });
     if (!talent) {
       throw new NotFoundException('Talent not found');
     }
-    
+
     let filePaths: string[] = talent.files || [];
     if (files && files.files) {
-      filePaths = files.files.map((file: any) => `/uploads/talents/${file.filename}`);
+      filePaths = files.files.map(
+        (file: any) => `/uploads/talents/${file.filename}`,
+      );
     }
-    
+
     Object.assign(talent, { ...updateTalentDto, files: filePaths });
     return this.talentsRepository.save(talent);
   }
@@ -221,15 +273,18 @@ export class StudentsService {
     });
   }
 
-  async uploadProfileImage(studentId: string, file: Express.Multer.File): Promise<Student> {
+  async uploadProfileImage(
+    studentId: string,
+    file: Express.Multer.File,
+  ): Promise<Student> {
     const student = await this.findOne(studentId);
-    
+
     // Delete old profile image if it exists
     if (student.profileImage) {
       // Note: In production, you'd want to delete the actual file from disk
       // For now, we'll just update the database
     }
-    
+
     // Update student with new profile image path
     student.profileImage = `/uploads/profiles/${file.filename}`;
     return this.studentsRepository.save(student);
@@ -237,7 +292,7 @@ export class StudentsService {
 
   async deleteProfileImage(studentId: string): Promise<Student> {
     const student = await this.findOne(studentId);
-    
+
     // Note: In production, you'd want to delete the actual file from disk
     // For now, we'll just update the database
     student.profileImage = '';
@@ -246,7 +301,7 @@ export class StudentsService {
 
   async updateProfileViews(studentId: string): Promise<Student> {
     const student = await this.findOne(studentId);
-    
+
     // Increment profile views count
     student.profileViews = (student.profileViews || 0) + 1;
     return this.studentsRepository.save(student);
@@ -257,16 +312,22 @@ export class StudentsService {
       relations: ['student', 'student.user'],
       order: { createdAt: 'DESC' },
     });
-    console.log(`[StudentsService.getAllTalents] Found ${talents?.length || 0} talents in database`);
+    console.log(
+      `[StudentsService.getAllTalents] Found ${talents?.length || 0} talents in database`,
+    );
     return talents || [];
   }
 
   // New social features methods
   // Social features methods
-  async likeTalent(studentId: string, likeTalentDto: LikeTalentDto, user: User): Promise<Student> {
+  async likeTalent(
+    studentId: string,
+    likeTalentDto: LikeTalentDto,
+    user: User,
+  ): Promise<Student> {
     // Any authenticated user can like any talent
     // Just verify that the user is authenticated (which is handled by JWT guard)
-    
+
     const student = await this.findOne(studentId);
     const { talentId, isLiked } = likeTalentDto;
 
@@ -279,24 +340,30 @@ export class StudentsService {
         student.likedTalents.push(talentId);
       }
     } else {
-      student.likedTalents = student.likedTalents.filter(id => id !== talentId);
+      student.likedTalents = student.likedTalents.filter(
+        (id) => id !== talentId,
+      );
     }
 
     // Ensure likedTalents is always an array and properly formatted for PostgreSQL
     if (!Array.isArray(student.likedTalents)) {
       student.likedTalents = [];
     }
-    
+
     // Filter out any undefined or null values
-    student.likedTalents = student.likedTalents.filter(id => id != null);
+    student.likedTalents = student.likedTalents.filter((id) => id != null);
 
     return this.studentsRepository.save(student);
   }
 
-  async saveTalent(studentId: string, saveTalentDto: SaveTalentDto, user: User): Promise<Student> {
+  async saveTalent(
+    studentId: string,
+    saveTalentDto: SaveTalentDto,
+    user: User,
+  ): Promise<Student> {
     // Any authenticated user can save any talent
     // Just verify that the user is authenticated (which is handled by JWT guard)
-    
+
     const student = await this.findOne(studentId);
     const { talentId, isSaved } = saveTalentDto;
 
@@ -309,16 +376,18 @@ export class StudentsService {
         student.savedTalents.push(talentId);
       }
     } else {
-      student.savedTalents = student.savedTalents.filter(id => id !== talentId);
+      student.savedTalents = student.savedTalents.filter(
+        (id) => id !== talentId,
+      );
     }
 
     // Ensure savedTalents is always an array and properly formatted for PostgreSQL
     if (!Array.isArray(student.savedTalents)) {
       student.savedTalents = [];
     }
-    
+
     // Filter out any undefined or null values
-    student.savedTalents = student.savedTalents.filter(id => id != null);
+    student.savedTalents = student.savedTalents.filter((id) => id != null);
 
     return this.studentsRepository.save(student);
   }
@@ -341,21 +410,34 @@ export class StudentsService {
     return this.talentsRepository.findBy({ id: In(student.savedTalents) });
   }
 
-  async requestCollaboration(studentId: string, collaborationRequestDto: CollaborationRequestDto, user: User): Promise<Collaboration> {
-    console.log('requestCollaboration called with:', { studentId, collaborationRequestDto, user });
+  async requestCollaboration(
+    studentId: string,
+    collaborationRequestDto: CollaborationRequestDto,
+    user: User,
+  ): Promise<Collaboration> {
+    console.log('requestCollaboration called with:', {
+      studentId,
+      collaborationRequestDto,
+      user,
+    });
     console.log('User object:', JSON.stringify(user, null, 2));
-    
+
     // Verify the user is authenticated
     if (!user.id) {
       throw new ForbiddenException('User not authenticated');
     }
-    
+
     // Check if user is trying to collaborate with themselves
     if (studentId === collaborationRequestDto.recipientId) {
-      throw new ForbiddenException('You cannot request collaboration with yourself');
+      throw new ForbiddenException(
+        'You cannot request collaboration with yourself',
+      );
     }
 
-    console.log('Creating collaboration:', { requesterId: studentId, recipientId: collaborationRequestDto.recipientId });
+    console.log('Creating collaboration:', {
+      requesterId: studentId,
+      recipientId: collaborationRequestDto.recipientId,
+    });
 
     const collaboration = this.collaborationsRepository.create({
       ...collaborationRequestDto,
@@ -367,15 +449,16 @@ export class StudentsService {
 
   async getCollaborationRequests(studentId: string): Promise<Collaboration[]> {
     return this.collaborationsRepository.find({
-      where: [
-        { requesterId: studentId },
-        { recipientId: studentId }
-      ],
+      where: [{ requesterId: studentId }, { recipientId: studentId }],
       relations: ['requester', 'recipient', 'talent'],
     });
   }
 
-  async respondToCollaboration(collaborationId: string, response: { status: string; message?: string }, user: User): Promise<Collaboration> {
+  async respondToCollaboration(
+    collaborationId: string,
+    response: { status: string; message?: string },
+    user: User,
+  ): Promise<Collaboration> {
     const collaboration = await this.collaborationsRepository.findOne({
       where: { id: collaborationId },
       relations: ['recipient'],
@@ -386,8 +469,13 @@ export class StudentsService {
     }
 
     // Verify the user is the recipient or has permission
-    if (user.role !== 'admin' && user.student?.id !== collaboration.recipientId) {
-      throw new ForbiddenException('You can only respond to collaboration requests sent to you');
+    if (
+      user.role !== 'admin' &&
+      user.student?.id !== collaboration.recipientId
+    ) {
+      throw new ForbiddenException(
+        'You can only respond to collaboration requests sent to you',
+      );
     }
 
     collaboration.status = response.status as CollaborationStatus;
@@ -401,7 +489,7 @@ export class StudentsService {
   // Skills methods
   async addSkill(studentId: string, createSkillDto: any): Promise<any> {
     const student = await this.findOne(studentId);
-    
+
     const skill = this.skillsRepository.create({
       ...createSkillDto,
       student,
@@ -409,14 +497,18 @@ export class StudentsService {
     return this.skillsRepository.save(skill);
   }
 
-  async updateSkill(studentId: string, skillId: string, updateSkillDto: any): Promise<Skill> {
+  async updateSkill(
+    studentId: string,
+    skillId: string,
+    updateSkillDto: any,
+  ): Promise<Skill> {
     const skill = await this.skillsRepository.findOne({
       where: { id: skillId, student: { id: studentId } },
     });
     if (!skill) {
       throw new NotFoundException('Skill not found');
     }
-    
+
     Object.assign(skill, updateSkillDto);
     return this.skillsRepository.save(skill);
   }
@@ -428,7 +520,29 @@ export class StudentsService {
     if (!skill) {
       throw new NotFoundException('Skill not found');
     }
-    
+
     await this.skillsRepository.remove(skill);
   }
-} 
+
+  async getWhoLikedTalents(studentId: string): Promise<Student[]> {
+    // Get the target student's talents
+    const targetStudent = await this.findOne(studentId);
+    const targetTalentIds =
+      targetStudent.talents?.map((talent) => talent.id) || [];
+
+    if (targetTalentIds.length === 0) {
+      return [];
+    }
+
+    // Find all students whose likedTalents array overlaps with the target student's talent IDs
+    const studentsWhoLiked = await this.studentsRepository.find({
+      where: {
+        likedTalents: ArrayOverlap(targetTalentIds),
+        id: Not(studentId), // Exclude the target student themselves
+      },
+      relations: ['user'],
+    });
+
+    return studentsWhoLiked;
+  }
+}

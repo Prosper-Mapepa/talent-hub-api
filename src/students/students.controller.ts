@@ -1,5 +1,22 @@
-import { Controller, Get, Post, Put, Patch, Delete, Body, Param, UseGuards, UseInterceptors, UploadedFiles, UploadedFile, Query } from '@nestjs/common';
-import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  UseInterceptors,
+  UploadedFiles,
+  UploadedFile,
+  Query,
+} from '@nestjs/common';
+import {
+  FileFieldsInterceptor,
+  FileInterceptor,
+} from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { StudentsService } from './students.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
@@ -47,8 +64,6 @@ export class StudentsController {
     return this.studentsService.update(id, updateStudentDto);
   }
 
-
-
   // Skills endpoints
   @Post(':id/skills')
   addSkill(@Param('id') id: string, @Body() createSkillDto: CreateSkillDto) {
@@ -56,7 +71,11 @@ export class StudentsController {
   }
 
   @Patch(':id/skills/:skillId')
-  updateSkill(@Param('id') id: string, @Param('skillId') skillId: string, @Body() updateSkillDto: UpdateSkillDto) {
+  updateSkill(
+    @Param('id') id: string,
+    @Param('skillId') skillId: string,
+    @Body() updateSkillDto: UpdateSkillDto,
+  ) {
     return this.studentsService.updateSkill(id, skillId, updateSkillDto);
   }
 
@@ -67,27 +86,36 @@ export class StudentsController {
 
   // Profile image endpoints
   @Post(':id/profile-image')
-  @UseInterceptors(FileInterceptor('profileImage', {
-    storage: diskStorage({
-      destination: './uploads/profiles',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'profile-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
+  @UseInterceptors(
+    FileInterceptor('profileImage', {
+      storage: diskStorage({
+        destination: './uploads/profiles',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            'profile-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5MB limit
+      },
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/^image\/(jpeg|png|jpg|webp)$/)) {
+          return cb(new Error('Only image files are allowed!'), false);
+        }
+        cb(null, true);
+      },
     }),
-    limits: {
-      fileSize: 5 * 1024 * 1024 // 5MB limit
-    },
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype.match(/^image\/(jpeg|png|jpg|webp)$/)) {
-        return cb(new Error('Only image files are allowed!'), false);
-      }
-      cb(null, true);
-    }
-  }))
+  )
   uploadProfileImage(
     @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File
+    @UploadedFile() file: Express.Multer.File,
   ) {
     return this.studentsService.uploadProfileImage(id, file);
   }
@@ -104,138 +132,207 @@ export class StudentsController {
 
   // Projects endpoints
   @Post(':id/projects')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'files', maxCount: 10 }
-  ], {
-    storage: diskStorage({
-      destination: './uploads/projects',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
-    })
-  }))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: './uploads/projects',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            file.fieldname +
+              '-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+    }),
+  )
   addProject(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() createProjectDto: CreateProjectDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] }
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
     return this.studentsService.addProject(id, createProjectDto, files);
   }
 
   @Put(':id/projects/:projectId')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'files', maxCount: 10 }
-  ], {
-    storage: diskStorage({
-      destination: './uploads/projects',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
-    })
-  }))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: './uploads/projects',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            file.fieldname +
+              '-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+    }),
+  )
   updateProject(
-    @Param('id') id: string, 
-    @Param('projectId') projectId: string, 
+    @Param('id') id: string,
+    @Param('projectId') projectId: string,
     @Body() updateProjectDto: CreateProjectDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] }
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
-    return this.studentsService.updateProject(id, projectId, updateProjectDto, files);
+    return this.studentsService.updateProject(
+      id,
+      projectId,
+      updateProjectDto,
+      files,
+    );
   }
 
   @Delete(':id/projects/:projectId')
-  removeProject(@Param('id') id: string, @Param('projectId') projectId: string) {
+  removeProject(
+    @Param('id') id: string,
+    @Param('projectId') projectId: string,
+  ) {
     return this.studentsService.removeProject(id, projectId);
   }
 
   // Achievements endpoints
   @Post(':id/achievements')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'files', maxCount: 10 }
-  ], {
-    storage: diskStorage({
-      destination: './uploads/achievements',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
-    })
-  }))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: './uploads/achievements',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            file.fieldname +
+              '-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+    }),
+  )
   addAchievement(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() createAchievementDto: CreateAchievementDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] }
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
     return this.studentsService.addAchievement(id, createAchievementDto, files);
   }
 
   @Put(':id/achievements/:achievementId')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'files', maxCount: 10 }
-  ], {
-    storage: diskStorage({
-      destination: './uploads/achievements',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
-    })
-  }))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: './uploads/achievements',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            file.fieldname +
+              '-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+    }),
+  )
   updateAchievement(
-    @Param('id') id: string, 
-    @Param('achievementId') achievementId: string, 
+    @Param('id') id: string,
+    @Param('achievementId') achievementId: string,
     @Body() updateAchievementDto: CreateAchievementDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] }
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
-    return this.studentsService.updateAchievement(id, achievementId, updateAchievementDto, files);
+    return this.studentsService.updateAchievement(
+      id,
+      achievementId,
+      updateAchievementDto,
+      files,
+    );
   }
 
   @Delete(':id/achievements/:achievementId')
-  removeAchievement(@Param('id') id: string, @Param('achievementId') achievementId: string) {
+  removeAchievement(
+    @Param('id') id: string,
+    @Param('achievementId') achievementId: string,
+  ) {
     return this.studentsService.removeAchievement(id, achievementId);
   }
 
   // Talents endpoints
   @Post(':id/talents')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'files', maxCount: 10 }
-  ], {
-    storage: diskStorage({
-      destination: './uploads/talents',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
-    })
-  }))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: './uploads/talents',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            file.fieldname +
+              '-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+    }),
+  )
   addTalent(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() createTalentDto: CreateTalentDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] }
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
     return this.studentsService.addTalent(id, createTalentDto, files);
   }
 
   @Put(':id/talents/:talentId')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'files', maxCount: 10 }
-  ], {
-    storage: diskStorage({
-      destination: './uploads/talents',
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + '.' + file.originalname.split('.').pop());
-      }
-    })
-  }))
+  @UseInterceptors(
+    FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
+      storage: diskStorage({
+        destination: './uploads/talents',
+        filename: (req, file, cb) => {
+          const uniqueSuffix =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(
+            null,
+            file.fieldname +
+              '-' +
+              uniqueSuffix +
+              '.' +
+              file.originalname.split('.').pop(),
+          );
+        },
+      }),
+    }),
+  )
   updateTalent(
-    @Param('id') id: string, 
-    @Param('talentId') talentId: string, 
+    @Param('id') id: string,
+    @Param('talentId') talentId: string,
     @Body() updateTalentDto: UpdateTalentDto,
-    @UploadedFiles() files: { files?: Express.Multer.File[] }
+    @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
-    return this.studentsService.updateTalent(id, talentId, updateTalentDto, files);
+    return this.studentsService.updateTalent(
+      id,
+      talentId,
+      updateTalentDto,
+      files,
+    );
   }
 
   @Delete(':id/talents/:talentId')
@@ -251,29 +348,33 @@ export class StudentsController {
   // New social features endpoints
   @Post(':id/like-talent')
   likeTalent(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() likeTalentDto: LikeTalentDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     return this.studentsService.likeTalent(id, likeTalentDto, user);
   }
 
   @Post(':id/save-talent')
   saveTalent(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() saveTalentDto: SaveTalentDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
     return this.studentsService.saveTalent(id, saveTalentDto, user);
   }
 
   @Post(':id/collaboration-request')
   requestCollaboration(
-    @Param('id') id: string, 
+    @Param('id') id: string,
     @Body() collaborationRequestDto: CollaborationRequestDto,
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
-    return this.studentsService.requestCollaboration(id, collaborationRequestDto, user);
+    return this.studentsService.requestCollaboration(
+      id,
+      collaborationRequestDto,
+      user,
+    );
   }
 
   @Get(':id/liked-talents')
@@ -291,12 +392,21 @@ export class StudentsController {
     return this.studentsService.getCollaborationRequests(id);
   }
 
+  @Get(':id/who-liked-talents')
+  getWhoLikedTalents(@Param('id') id: string) {
+    return this.studentsService.getWhoLikedTalents(id);
+  }
+
   @Put('collaboration/:collaborationId/respond')
   respondToCollaboration(
     @Param('collaborationId') collaborationId: string,
     @Body() response: { status: string; message?: string },
-    @CurrentUser() user: User
+    @CurrentUser() user: User,
   ) {
-    return this.studentsService.respondToCollaboration(collaborationId, response, user);
+    return this.studentsService.respondToCollaboration(
+      collaborationId,
+      response,
+      user,
+    );
   }
-} 
+}
