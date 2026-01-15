@@ -57,7 +57,7 @@ export class UsersService {
     await this.userRepository.update(userId, {
       resetPasswordToken: token,
       resetPasswordExpires: expires,
-    });
+    } as any);
   }
 
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {
@@ -65,7 +65,7 @@ export class UsersService {
       password: hashedPassword,
       resetPasswordToken: null,
       resetPasswordExpires: null,
-    });
+    } as any);
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
