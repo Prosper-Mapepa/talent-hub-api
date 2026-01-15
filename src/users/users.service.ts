@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -34,6 +38,34 @@ export class UsersService {
       .addSelect('user.password')
       .where('user.email = :email', { email })
       .getOne();
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.resetPasswordToken = :token', { token })
+      .andWhere('user.resetPasswordExpires > :now', { now: new Date() })
+      .getOne();
+  }
+
+  async updatePasswordResetToken(
+    userId: string,
+    token: string | null,
+    expires: Date | null,
+  ): Promise<void> {
+    await this.userRepository.update(userId, {
+      resetPasswordToken: token,
+      resetPasswordExpires: expires,
+    });
+  }
+
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
+    await this.userRepository.update(userId, {
+      password: hashedPassword,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
@@ -94,7 +126,7 @@ export class UsersService {
       relations: ['follower'],
     });
 
-    return follows.map(follow => follow.follower);
+    return follows.map((follow) => follow.follower);
   }
 
   async getFollowing(userId: string): Promise<User[]> {
@@ -103,14 +135,17 @@ export class UsersService {
       relations: ['following'],
     });
 
-    return follows.map(follow => follow.following);
+    return follows.map((follow) => follow.following);
   }
 
-  async checkFollowStatus(followerId: string, followingId: string): Promise<boolean> {
+  async checkFollowStatus(
+    followerId: string,
+    followingId: string,
+  ): Promise<boolean> {
     const follow = await this.followRepository.findOne({
       where: { followerId, followingId },
     });
 
     return !!follow;
   }
-} 
+}
