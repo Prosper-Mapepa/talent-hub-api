@@ -52,12 +52,33 @@ export class UsersService implements OnModuleInit {
   }
 
   async findByResetToken(token: string): Promise<User | null> {
-    return this.userRepository
-      .createQueryBuilder('user')
-      .addSelect('user.password')
-      .where('user.resetPasswordToken = :token', { token })
-      .andWhere('user.resetPasswordExpires > :now', { now: new Date() })
-      .getOne();
+    // Use raw column names to avoid TypeORM metadata issues
+    // Ensure columns exist first
+    try {
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('user.resetPasswordToken = :token', { token })
+        .andWhere('user.resetPasswordExpires > :now', { now: new Date() })
+        .getOne();
+      return user;
+    } catch (error: any) {
+      // If columns don't exist, add them and retry with raw SQL
+      if (error.message?.includes('resetPasswordToken') || error.message?.includes('reset_password_token')) {
+        console.error('⚠️  Password reset columns missing in findByResetToken. Adding them...');
+        await this.ensurePasswordResetColumns();
+        // Use raw SQL query as fallback
+        const rawResult = await this.userRepository.query(
+          `SELECT * FROM users 
+           WHERE reset_password_token = $1 
+           AND reset_password_expires > $2 
+           LIMIT 1`,
+          [token, new Date()],
+        );
+        return rawResult && rawResult.length > 0 ? this.userRepository.create(rawResult[0]) : null;
+      }
+      throw error;
+    }
   }
 
   async updatePasswordResetToken(
@@ -67,30 +88,24 @@ export class UsersService implements OnModuleInit {
   ): Promise<void> {
     try {
       // Use raw SQL to ensure it works even if TypeORM metadata is out of sync
-      await this.userRepository
-        .createQueryBuilder()
-        .update(User)
-        .set({
-          resetPasswordToken: token,
-          resetPasswordExpires: expires,
-        } as any)
-        .where('id = :id', { id: userId })
-        .execute();
+      await this.userRepository.query(
+        `UPDATE users 
+         SET reset_password_token = $1, reset_password_expires = $2 
+         WHERE id = $3`,
+        [token, expires, userId],
+      );
     } catch (error: any) {
       // If columns don't exist, try to add them and retry
       if (error.message?.includes('resetPasswordToken') || error.message?.includes('reset_password_token')) {
         console.error('⚠️  Password reset columns missing. Attempting to add them...');
         await this.ensurePasswordResetColumns();
-        // Retry after adding columns
-        await this.userRepository
-          .createQueryBuilder()
-          .update(User)
-          .set({
-            resetPasswordToken: token,
-            resetPasswordExpires: expires,
-          } as any)
-          .where('id = :id', { id: userId })
-          .execute();
+        // Retry after adding columns using raw SQL
+        await this.userRepository.query(
+          `UPDATE users 
+           SET reset_password_token = $1, reset_password_expires = $2 
+           WHERE id = $3`,
+          [token, expires, userId],
+        );
       } else {
         throw error;
       }
@@ -99,32 +114,25 @@ export class UsersService implements OnModuleInit {
 
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {
     try {
-      await this.userRepository
-        .createQueryBuilder()
-        .update(User)
-        .set({
-          password: hashedPassword,
-          resetPasswordToken: null,
-          resetPasswordExpires: null,
-        } as any)
-        .where('id = :id', { id: userId })
-        .execute();
+      // Use raw SQL to ensure it works even if TypeORM metadata is out of sync
+      await this.userRepository.query(
+        `UPDATE users 
+         SET password = $1, reset_password_token = NULL, reset_password_expires = NULL 
+         WHERE id = $2`,
+        [hashedPassword, userId],
+      );
     } catch (error: any) {
       // If columns don't exist, try to add them and retry
       if (error.message?.includes('resetPasswordToken') || error.message?.includes('reset_password_token')) {
         console.error('⚠️  Password reset columns missing. Attempting to add them...');
         await this.ensurePasswordResetColumns();
-        // Retry after adding columns
-        await this.userRepository
-          .createQueryBuilder()
-          .update(User)
-          .set({
-            password: hashedPassword,
-            resetPasswordToken: null,
-            resetPasswordExpires: null,
-          } as any)
-          .where('id = :id', { id: userId })
-          .execute();
+        // Retry after adding columns using raw SQL
+        await this.userRepository.query(
+          `UPDATE users 
+           SET password = $1, reset_password_token = NULL, reset_password_expires = NULL 
+           WHERE id = $2`,
+          [hashedPassword, userId],
+        );
       } else {
         throw error;
       }
