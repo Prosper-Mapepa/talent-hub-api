@@ -57,26 +57,42 @@ async function runMigrations() {
     console.log(`   Connecting to: ${dbHost}:${dbPort}/${dbName}`);
     await AppDataSource.initialize();
     
-    // Check if password reset fields exist before running migrations
+    // Force add password reset fields - check and add if missing
+    console.log('🔍 Checking for password reset columns...');
     const queryRunner = AppDataSource.createQueryRunner();
     await queryRunner.connect();
     
     try {
-      const table = await queryRunner.getTable('users');
-      const hasResetToken = table?.findColumnByName('reset_password_token');
-      const hasResetExpires = table?.findColumnByName('reset_password_expires');
-      
-      if (!hasResetToken || !hasResetExpires) {
-        console.log('⚠️  Password reset columns missing. Running migration manually...');
-        await queryRunner.query(`
-          ALTER TABLE users 
-          ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255) NULL,
-          ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP NULL;
-        `);
-        console.log('✅ Password reset columns added successfully!');
-      } else {
-        console.log('✅ Password reset columns already exist.');
-      }
+      // Try to add columns directly - this will fail silently if they exist due to IF NOT EXISTS
+      console.log('📝 Adding password reset columns (if missing)...');
+      await queryRunner.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'reset_password_token'
+          ) THEN
+            ALTER TABLE users ADD COLUMN reset_password_token VARCHAR(255) NULL;
+            RAISE NOTICE 'Added reset_password_token column';
+          ELSE
+            RAISE NOTICE 'reset_password_token column already exists';
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'reset_password_expires'
+          ) THEN
+            ALTER TABLE users ADD COLUMN reset_password_expires TIMESTAMP NULL;
+            RAISE NOTICE 'Added reset_password_expires column';
+          ELSE
+            RAISE NOTICE 'reset_password_expires column already exists';
+          END IF;
+        END $$;
+      `);
+      console.log('✅ Password reset columns check complete!');
+    } catch (columnError: any) {
+      console.error('⚠️  Error checking/adding columns:', columnError.message);
+      // Continue anyway - migration might handle it
     } finally {
       await queryRunner.release();
     }
