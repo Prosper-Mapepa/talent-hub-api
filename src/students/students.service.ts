@@ -137,7 +137,9 @@ export class StudentsService {
       throw new NotFoundException('Project not found');
     }
 
-    let images: string[] = project.images || [];
+    const oldImages: string[] = project.images || [];
+    let images: string[] = oldImages;
+
     if (files && files.files && files.files.length > 0) {
       try {
         const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
@@ -145,6 +147,12 @@ export class StudentsService {
           'projects',
         );
         images = uploadResults.map((result) => result.secure_url);
+
+        // Delete old Cloudinary files that are being replaced
+        const filesToDelete = oldImages.filter(
+          (oldUrl) => !images.includes(oldUrl) && oldUrl.startsWith('http'),
+        );
+        await this.deleteCloudinaryFiles(filesToDelete);
       } catch (error) {
         console.error('Error uploading project files to Cloudinary:', error);
         throw new Error('Failed to upload project files');
@@ -162,6 +170,12 @@ export class StudentsService {
     if (!project) {
       throw new NotFoundException('Project not found');
     }
+
+    // Delete all Cloudinary files associated with this project
+    const filesToDelete =
+      project.images?.filter((url) => url.startsWith('http')) || [];
+    await this.deleteCloudinaryFiles(filesToDelete);
+
     await this.projectsRepository.remove(project);
   }
 
@@ -211,7 +225,9 @@ export class StudentsService {
       throw new NotFoundException('Achievement not found');
     }
 
-    let fileArr: string[] = achievement.files || [];
+    const oldFiles: string[] = achievement.files || [];
+    let fileArr: string[] = oldFiles;
+
     if (files && files.files && files.files.length > 0) {
       try {
         const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
@@ -219,6 +235,12 @@ export class StudentsService {
           'achievements',
         );
         fileArr = uploadResults.map((result) => result.secure_url);
+
+        // Delete old Cloudinary files that are being replaced
+        const filesToDelete = oldFiles.filter(
+          (oldUrl) => !fileArr.includes(oldUrl) && oldUrl.startsWith('http'),
+        );
+        await this.deleteCloudinaryFiles(filesToDelete);
       } catch (error) {
         console.error(
           'Error uploading achievement files to Cloudinary:',
@@ -242,6 +264,12 @@ export class StudentsService {
     if (!achievement) {
       throw new NotFoundException('Achievement not found');
     }
+
+    // Delete all Cloudinary files associated with this achievement
+    const filesToDelete =
+      achievement.files?.filter((url) => url.startsWith('http')) || [];
+    await this.deleteCloudinaryFiles(filesToDelete);
+
     await this.achievementsRepository.remove(achievement);
   }
 
@@ -288,7 +316,9 @@ export class StudentsService {
       throw new NotFoundException('Talent not found');
     }
 
-    let filePaths: string[] = talent.files || [];
+    const oldFiles: string[] = talent.files || [];
+    let filePaths: string[] = oldFiles;
+
     if (files && files.files && files.files.length > 0) {
       try {
         const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
@@ -296,6 +326,12 @@ export class StudentsService {
           'talents',
         );
         filePaths = uploadResults.map((result) => result.secure_url);
+
+        // Delete old Cloudinary files that are being replaced
+        const filesToDelete = oldFiles.filter(
+          (oldUrl) => !filePaths.includes(oldUrl) && oldUrl.startsWith('http'),
+        );
+        await this.deleteCloudinaryFiles(filesToDelete);
       } catch (error) {
         console.error('Error uploading talent files to Cloudinary:', error);
         throw new Error('Failed to upload talent files');
@@ -313,7 +349,32 @@ export class StudentsService {
     if (!talent) {
       throw new NotFoundException('Talent not found');
     }
+
+    // Delete all Cloudinary files associated with this talent
+    const filesToDelete =
+      talent.files?.filter((url) => url.startsWith('http')) || [];
+    await this.deleteCloudinaryFiles(filesToDelete);
+
     await this.talentsRepository.remove(talent);
+  }
+
+  /**
+   * Helper method to delete multiple Cloudinary files
+   * Silently handles errors to prevent upload failures from blocking operations
+   */
+  private async deleteCloudinaryFiles(urls: string[]): Promise<void> {
+    if (!urls || urls.length === 0) return;
+
+    const deletePromises = urls.map(async (url) => {
+      try {
+        await this.cloudinaryService.deleteFileByUrl(url);
+      } catch (error) {
+        // Log but don't throw - deletion failures shouldn't block updates
+        console.warn(`Failed to delete Cloudinary file ${url}:`, error);
+      }
+    });
+
+    await Promise.all(deletePromises);
   }
 
   async getStudentTalents(studentId: string): Promise<StudentTalent[]> {
