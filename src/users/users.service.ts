@@ -70,9 +70,9 @@ export class UsersService implements OnModuleInit {
         return null;
       }
       
-      // Map raw result to User entity
+      // Map raw result to User entity - use type assertion to avoid TypeORM type checking
       const rawUser = rawResult[0];
-      return this.userRepository.create({
+      const user = this.userRepository.create({
         id: rawUser.id,
         email: rawUser.email,
         password: rawUser.password,
@@ -81,10 +81,11 @@ export class UsersService implements OnModuleInit {
         emailVerified: rawUser.email_verified,
         agreedToTerms: rawUser.agreed_to_terms,
         resetPasswordToken: rawUser.reset_password_token,
-        resetPasswordExpires: rawUser.reset_password_expires,
-        createdAt: rawUser.created_at,
-        updatedAt: rawUser.updated_at,
-      });
+        resetPasswordExpires: rawUser.reset_password_expires ? new Date(rawUser.reset_password_expires) : null,
+        createdAt: rawUser.created_at ? new Date(rawUser.created_at) : new Date(),
+        updatedAt: rawUser.updated_at ? new Date(rawUser.updated_at) : new Date(),
+      } as any);
+      return user;
     } catch (error: any) {
       console.error('Error in findByResetToken:', error);
       throw error;
