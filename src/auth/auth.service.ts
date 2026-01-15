@@ -250,10 +250,16 @@ export class AuthService {
     // Send email
     try {
       await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+      console.log(`Password reset email sent successfully to ${user.email}`);
     } catch (error) {
+      console.error('Error sending password reset email:', error);
+      // Log detailed error for debugging
+      if (error.response) {
+        console.error('SendGrid API Error:', JSON.stringify(error.response.body, null, 2));
+      }
       // If email fails, clear the reset token
       await this.usersService.updatePasswordResetToken(user.id, null, null);
-      throw new BadRequestException('Failed to send reset email');
+      throw new BadRequestException('Failed to send reset email. Please try again later.');
     }
   }
 
