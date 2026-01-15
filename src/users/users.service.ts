@@ -52,31 +52,41 @@ export class UsersService implements OnModuleInit {
   }
 
   async findByResetToken(token: string): Promise<User | null> {
-    // Use raw column names to avoid TypeORM metadata issues
-    // Ensure columns exist first
+    // Use raw SQL to bypass TypeORM metadata issues
     try {
-      const user = await this.userRepository
-        .createQueryBuilder('user')
-        .addSelect('user.password')
-        .where('user.resetPasswordToken = :token', { token })
-        .andWhere('user.resetPasswordExpires > :now', { now: new Date() })
-        .getOne();
-      return user;
-    } catch (error: any) {
-      // If columns don't exist, add them and retry with raw SQL
-      if (error.message?.includes('resetPasswordToken') || error.message?.includes('reset_password_token')) {
-        console.error('⚠️  Password reset columns missing in findByResetToken. Adding them...');
-        await this.ensurePasswordResetColumns();
-        // Use raw SQL query as fallback
-        const rawResult = await this.userRepository.query(
-          `SELECT * FROM users 
-           WHERE reset_password_token = $1 
-           AND reset_password_expires > $2 
-           LIMIT 1`,
-          [token, new Date()],
-        );
-        return rawResult && rawResult.length > 0 ? this.userRepository.create(rawResult[0]) : null;
+      // First ensure columns exist
+      await this.ensurePasswordResetColumns();
+      
+      // Use raw SQL query with actual column names
+      const rawResult: any[] = await this.userRepository.query(
+        `SELECT * FROM users 
+         WHERE reset_password_token = $1 
+         AND reset_password_expires > $2 
+         LIMIT 1`,
+        [token, new Date()],
+      );
+      
+      if (!rawResult || rawResult.length === 0) {
+        return null;
       }
+      
+      // Map raw result to User entity
+      const rawUser = rawResult[0];
+      return this.userRepository.create({
+        id: rawUser.id,
+        email: rawUser.email,
+        password: rawUser.password,
+        role: rawUser.role,
+        status: rawUser.status,
+        emailVerified: rawUser.email_verified,
+        agreedToTerms: rawUser.agreed_to_terms,
+        resetPasswordToken: rawUser.reset_password_token,
+        resetPasswordExpires: rawUser.reset_password_expires,
+        createdAt: rawUser.created_at,
+        updatedAt: rawUser.updated_at,
+      });
+    } catch (error: any) {
+      console.error('Error in findByResetToken:', error);
       throw error;
     }
   }
