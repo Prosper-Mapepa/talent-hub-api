@@ -12,6 +12,8 @@ export class CloudinaryService {
     cloudinaryConfig();
   }
 
+  // Cloudinary file upload and management service
+
   async uploadFile(
     file: Express.Multer.File,
     folder: string = 'uploads',
