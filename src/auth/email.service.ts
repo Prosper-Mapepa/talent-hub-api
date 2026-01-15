@@ -126,11 +126,37 @@ If you didn't request a password reset, please ignore this email.`,
       console.error('SendGrid API key is not configured');
       throw new Error('Email service is not configured. Please contact support.');
     }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.error(`Invalid email format: ${email}`);
+      throw new Error('Invalid email address format');
+    }
+    
+    // Log configuration for debugging
+    const apiKeyPreview = apiKey ? `${apiKey.substring(0, 8)}...` : 'NOT SET';
+    console.log(`SendGrid configuration check: API Key exists: ${!!apiKey}, Preview: ${apiKeyPreview}`);
 
     try {
       console.log(`Attempting to send password reset email to: ${email}`);
+      console.log(`Using fromEmail: ${this.fromEmail}`);
+      console.log(`Frontend URL: ${frontendUrl}`);
+      
       const result = await sgMail.send(msg);
-      console.log(`Email sent successfully. Status code: ${result[0]?.statusCode}`);
+      const statusCode = result[0]?.statusCode;
+      const headers = result[0]?.headers;
+      
+      console.log(`Email sent successfully. Status code: ${statusCode}`);
+      console.log(`SendGrid response headers:`, JSON.stringify(headers, null, 2));
+      
+      // 202 means accepted for processing, but doesn't guarantee delivery
+      if (statusCode === 202) {
+        console.log(`Email accepted by SendGrid for delivery to: ${email}`);
+        console.log(`Check SendGrid Activity Feed for delivery status: https://app.sendgrid.com/activity`);
+        console.log(`Verify sender authentication in SendGrid: https://app.sendgrid.com/settings/sender_auth`);
+      }
+      
       return;
     } catch (error: any) {
       console.error('Error sending email:', error);
