@@ -20,7 +20,11 @@ export class EmailService {
     email: string,
     resetToken: string,
   ): Promise<void> {
-    const resetUrl = `${this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+    // Deep link for mobile app - will open app if installed, otherwise fallback to web
+    const deepLink = `cmutalenthub://reset-password?token=${resetToken}`;
+    const universalLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const msg = {
       to: email,
@@ -42,7 +46,12 @@ export class EmailService {
             <p>We received a request to reset your password for your CMU TalentHub account.</p>
             <p>Click the button below to reset your password:</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${resetUrl}" style="background: linear-gradient(135deg, #8F1A27 0%, #6A0032 100%); color: #ffffff; padding: 15px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Reset Password</a>
+              <!-- Universal link that works for both app and web -->
+              <a href="${universalLink}" style="background: linear-gradient(135deg, #8F1A27 0%, #6A0032 100%); color: #ffffff; padding: 15px 40px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">Reset Password</a>
+            </div>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #8F1A27;">
+              <p style="color: #666; font-size: 13px; margin: 0 0 8px 0;"><strong>📱 Using the mobile app?</strong></p>
+              <p style="color: #666; font-size: 12px; margin: 0;">If you have the CMU TalentHub app installed, clicking the button above will open the password reset screen in the app. Otherwise, you can use the web link below.</p>
             </div>
             <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
             <p style="color: #8F1A27; font-size: 12px; word-break: break-all;">${resetUrl}</p>
@@ -60,6 +69,8 @@ export class EmailService {
 We received a request to reset your password for your CMU TalentHub account.
 
 Click this link to reset your password: ${resetUrl}
+
+If you have the CMU TalentHub mobile app installed, the link will open the app. Otherwise, it will open in your web browser.
 
 This link will expire in 1 hour.
 
