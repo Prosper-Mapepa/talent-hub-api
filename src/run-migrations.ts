@@ -21,12 +21,16 @@ async function runMigrations() {
 
   if (!dbHost || !dbPort || !dbUsername || !dbPassword || !dbName) {
     console.error('\n❌ Database environment variables are not set!');
-    console.error('Required variables: DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME');
+    console.error(
+      'Required variables: DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME',
+    );
     console.error('\n📋 How to fix:');
     console.error('1. Go to Railway → Your Backend Service → Variables tab');
-    console.error('2. Add a PostgreSQL service if you haven\'t already');
+    console.error("2. Add a PostgreSQL service if you haven't already");
     console.error('3. Link the PostgreSQL service to your backend service');
-    console.error('4. Or manually add these variables from your PostgreSQL service:');
+    console.error(
+      '4. Or manually add these variables from your PostgreSQL service:',
+    );
     console.error('   - DB_HOST (from PGHOST)');
     console.error('   - DB_PORT (from PGPORT)');
     console.error('   - DB_USERNAME (from PGUSER)');
@@ -39,8 +43,12 @@ async function runMigrations() {
   // Check if trying to connect to localhost (common mistake)
   if (dbHost === 'localhost' || dbHost === '127.0.0.1' || dbHost === '::1') {
     console.error('\n❌ DB_HOST is set to localhost!');
-    console.error('This will not work in Railway. You need to use your Railway PostgreSQL host.');
-    console.error('Please set DB_HOST to your Railway PostgreSQL service hostname.');
+    console.error(
+      'This will not work in Railway. You need to use your Railway PostgreSQL host.',
+    );
+    console.error(
+      'Please set DB_HOST to your Railway PostgreSQL service hostname.',
+    );
     process.exit(1);
   }
 
@@ -48,10 +56,37 @@ async function runMigrations() {
     console.log('🔄 Running database migrations...');
     console.log(`   Connecting to: ${dbHost}:${dbPort}/${dbName}`);
     await AppDataSource.initialize();
+    
+    // Check if password reset fields exist before running migrations
+    const queryRunner = AppDataSource.createQueryRunner();
+    await queryRunner.connect();
+    
+    try {
+      const table = await queryRunner.getTable('users');
+      const hasResetToken = table?.findColumnByName('reset_password_token');
+      const hasResetExpires = table?.findColumnByName('reset_password_expires');
+      
+      if (!hasResetToken || !hasResetExpires) {
+        console.log('⚠️  Password reset columns missing. Running migration manually...');
+        await queryRunner.query(`
+          ALTER TABLE users 
+          ADD COLUMN IF NOT EXISTS reset_password_token VARCHAR(255) NULL,
+          ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMP NULL;
+        `);
+        console.log('✅ Password reset columns added successfully!');
+      } else {
+        console.log('✅ Password reset columns already exist.');
+      }
+    } finally {
+      await queryRunner.release();
+    }
+    
     const migrations = await AppDataSource.runMigrations();
     if (migrations.length > 0) {
-      console.log(`✅ Migrations completed. ${migrations.length} migration(s) executed.`);
-      migrations.forEach(migration => {
+      console.log(
+        `✅ Migrations completed. ${migrations.length} migration(s) executed.`,
+      );
+      migrations.forEach((migration) => {
         console.log(`   - ${migration.name}`);
       });
     } else {
@@ -62,7 +97,9 @@ async function runMigrations() {
     console.error('❌ Error running migrations:', error.message);
     if (error.code === 'ECONNREFUSED') {
       console.error('\n💡 Connection refused. This usually means:');
-      console.error('   1. Database environment variables are not set correctly');
+      console.error(
+        '   1. Database environment variables are not set correctly',
+      );
       console.error('   2. Database service is not running');
       console.error('   3. Database host/port is incorrect');
       console.error('\nPlease check your Railway database configuration.');
@@ -73,4 +110,3 @@ async function runMigrations() {
 }
 
 runMigrations();
-
