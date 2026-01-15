@@ -318,7 +318,14 @@ export class AuthController {
     },
   })
   async forgotPassword(@Body() dto: ForgotPasswordDto, @Res() res: Response) {
-    await this.authService.forgotPassword(dto.email);
+    try {
+      await this.authService.forgotPassword(dto.email);
+    } catch (error: any) {
+      // If email fails, still return success to user (security best practice)
+      // but log the error for debugging
+      console.error('Error in forgotPassword endpoint:', error);
+      // Continue to return success message to prevent email enumeration
+    }
     res.locals.message =
       'If an account with this email exists, a password reset link has been sent';
     return res.json({
