@@ -85,8 +85,8 @@ export class UsersService implements OnModuleInit {
         createdAt: rawUser.created_at ? new Date(rawUser.created_at) : new Date(),
         updatedAt: rawUser.updated_at ? new Date(rawUser.updated_at) : new Date(),
       };
-      // Explicitly create single User (not array) to fix type inference
-      const user: User = this.userRepository.create(userData as any) as User;
+      // Use 'unknown' first to avoid TypeScript type checking on create() overload
+      const user = this.userRepository.create(userData as any) as unknown as User;
       return user;
     } catch (error: any) {
       console.error('Error in findByResetToken:', error);
