@@ -8,12 +8,16 @@ export class EmailService {
 
   constructor(private configService: ConfigService) {
     const apiKey = this.configService.get<string>('SENDGRID_API_KEY');
-    if (apiKey) {
+    if (!apiKey) {
+      console.warn('WARNING: SENDGRID_API_KEY is not set. Email functionality will not work.');
+    } else {
       sgMail.setApiKey(apiKey);
+      console.log('SendGrid API key configured successfully');
     }
     this.fromEmail =
       this.configService.get<string>('SENDGRID_FROM_EMAIL') ||
       'noreply@cmutalenthub.com';
+    console.log(`Email service initialized with fromEmail: ${this.fromEmail}`);
   }
 
   async sendPasswordResetEmail(
@@ -116,11 +120,41 @@ This link will expire in 1 hour.
 If you didn't request a password reset, please ignore this email.`,
     };
 
+    // Validate SendGrid is configured
+    const apiKey = this.configService.get<string>('SENDGRID_API_KEY');
+    if (!apiKey) {
+      console.error('SendGrid API key is not configured');
+      throw new Error('Email service is not configured. Please contact support.');
+    }
+
     try {
-      await sgMail.send(msg);
-    } catch (error) {
+      console.log(`Attempting to send password reset email to: ${email}`);
+      const result = await sgMail.send(msg);
+      console.log(`Email sent successfully. Status code: ${result[0]?.statusCode}`);
+      return;
+    } catch (error: any) {
       console.error('Error sending email:', error);
-      throw error;
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        response: error.response ? {
+          statusCode: error.response.statusCode,
+          body: error.response.body,
+          headers: error.response.headers,
+        } : null,
+      });
+      
+      // Provide more specific error messages
+      if (error.code === 'UNAUTHORIZED') {
+        throw new Error('Invalid SendGrid API key. Please contact support.');
+      } else if (error.response?.body?.errors) {
+        const errors = error.response.body.errors;
+        throw new Error(`SendGrid error: ${errors.map((e: any) => e.message).join(', ')}`);
+      } else if (error.message) {
+        throw new Error(`Failed to send email: ${error.message}`);
+      } else {
+        throw new Error('Failed to send email. Please try again later.');
+      }
     }
   }
 }
