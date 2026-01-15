@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
+import { EmailService } from './email.service';
 import { UsersModule } from '../users/users.module';
 import { StudentsModule } from '../students/students.module';
 import { BusinessesModule } from '../businesses/businesses.module';
@@ -35,6 +36,7 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
   controllers: [AuthController],
   providers: [
     AuthService,
+    EmailService,
     JwtStrategy,
     LocalStrategy,
     JwtAuthGuard,

@@ -1,9 +1,19 @@
-import { Injectable, UnauthorizedException, BadRequestException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { StudentsService } from '../students/students.service';
 import { BusinessesService } from '../businesses/businesses.service';
+import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { UserRole } from '../users/enums/user-role.enum';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { CreateStudentDto } from '../students/dto/create-student.dto';
@@ -16,11 +26,12 @@ export class AuthService {
     private studentsService: StudentsService,
     private businessesService: BusinessesService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   async validateUser(email: string, pass: string): Promise<any> {
     const user = await this.usersService.findByEmail?.(email);
-    if (user && await bcrypt.compare(pass, user.password)) {
+    if (user && (await bcrypt.compare(pass, user.password))) {
       const { password, ...result } = user;
       return result;
     }
@@ -30,11 +41,17 @@ export class AuthService {
   async login(loginDto: any) {
     const user = await this.usersService.findByEmail(loginDto.email);
     if (!user) {
-      throw new UnauthorizedException({ message: 'Invalid credentials', errors: { email: ['User not found'] } });
+      throw new UnauthorizedException({
+        message: 'Invalid credentials',
+        errors: { email: ['User not found'] },
+      });
     }
     const isMatch = await bcrypt.compare(loginDto.password, user.password);
     if (!isMatch) {
-      throw new UnauthorizedException({ message: 'Invalid credentials', errors: { password: ['Incorrect password'] } });
+      throw new UnauthorizedException({
+        message: 'Invalid credentials',
+        errors: { password: ['Incorrect password'] },
+      });
     }
     const payload = { email: user.email, sub: user.id, role: user.role };
     let student = null;
@@ -54,18 +71,26 @@ export class AuthService {
           role: user.role,
           status: user.status,
         },
-        ...(student ? { student: {
-          id: student.id,
-          firstName: student.firstName,
-          lastName: student.lastName,
-          major: student.major,
-        }} : {}),
-        ...(business ? { business: {
-          id: business.id,
-          businessName: business.businessName,
-          businessType: business.businessType,
-          location: business.location,
-        }} : {}),
+        ...(student
+          ? {
+              student: {
+                id: student.id,
+                firstName: student.firstName,
+                lastName: student.lastName,
+                major: student.major,
+              },
+            }
+          : {}),
+        ...(business
+          ? {
+              business: {
+                id: business.id,
+                businessName: business.businessName,
+                businessType: business.businessType,
+                location: business.location,
+              },
+            }
+          : {}),
       },
       message: 'Login successful',
     };
@@ -75,7 +100,10 @@ export class AuthService {
     // Check if user already exists
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException({ message: 'Email already registered', errors: { email: ['Email already exists'] } });
+      throw new ConflictException({
+        message: 'Email already registered',
+        errors: { email: ['Email already exists'] },
+      });
     }
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -122,7 +150,10 @@ export class AuthService {
     // Check if user already exists
     const existing = await this.usersService.findByEmail(dto.email);
     if (existing) {
-      throw new ConflictException({ message: 'Email already registered', errors: { email: ['Email already exists'] } });
+      throw new ConflictException({
+        message: 'Email already registered',
+        errors: { email: ['Email already exists'] },
+      });
     }
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -195,4 +226,124 @@ export class AuthService {
     // Now delete the user
     await this.usersService.remove(userId);
   }
-} 
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.usersService.findByEmail(email);
+
+    // Don't reveal if user exists for security
+    if (!user) {
+      return;
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetExpires = new Date();
+    resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiry
+
+    // Save reset token to user
+    await this.usersService.updatePasswordResetToken(
+      user.id,
+      resetToken,
+      resetExpires,
+    );
+
+    // Send email
+    try {
+      await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+    } catch (error) {
+      // If email fails, clear the reset token
+      await this.usersService.updatePasswordResetToken(user.id, null, null);
+      throw new BadRequestException('Failed to send reset email');
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.usersService.findByResetToken(token);
+
+    if (!user) {
+      throw new BadRequestException({
+        message: 'Invalid or expired reset token',
+        errors: { token: ['Reset token is invalid or has expired'] },
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset token
+    await this.usersService.updatePassword(user.id, hashedPassword);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.usersService.findOne(userId);
+
+    if (!user) {
+      throw new NotFoundException({
+        message: 'User not found',
+        errors: { userId: ['User does not exist'] },
+      });
+    }
+
+    // Get user with password
+    const userWithPassword = await this.usersService.findByEmail(user.email);
+    if (!userWithPassword) {
+      throw new NotFoundException({
+        message: 'User not found',
+        errors: { userId: ['User does not exist'] },
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      userWithPassword.password,
+    );
+    if (!isMatch) {
+      throw new UnauthorizedException({
+        message: 'Invalid current password',
+        errors: { currentPassword: ['Current password is incorrect'] },
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await this.usersService.updatePassword(userId, hashedPassword);
+  }
+
+  async updateEmail(userId: string, newEmail: string): Promise<void> {
+    const user = await this.usersService.findOne(userId);
+
+    if (!user) {
+      throw new NotFoundException({
+        message: 'User not found',
+        errors: { userId: ['User does not exist'] },
+      });
+    }
+
+    // Check if email is already taken by another user
+    const existingUser = await this.usersService.findByEmail(newEmail);
+    if (existingUser && existingUser.id !== userId) {
+      throw new ConflictException({
+        message: 'Email already registered',
+        errors: { email: ['Email already exists'] },
+      });
+    }
+
+    // Check if email is the same
+    if (user.email === newEmail) {
+      throw new BadRequestException({
+        message: 'New email is the same as current email',
+        errors: { email: ['New email must be different from current email'] },
+      });
+    }
+
+    // Update email
+    await this.usersService.update(userId, { email: newEmail });
+  }
+}
