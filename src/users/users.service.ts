@@ -72,7 +72,7 @@ export class UsersService implements OnModuleInit {
       
       // Map raw result to User entity - use type assertion to avoid TypeORM type checking
       const rawUser = rawResult[0];
-      const user = this.userRepository.create({
+      const userData = {
         id: rawUser.id,
         email: rawUser.email,
         password: rawUser.password,
@@ -84,7 +84,9 @@ export class UsersService implements OnModuleInit {
         resetPasswordExpires: rawUser.reset_password_expires ? new Date(rawUser.reset_password_expires) : null,
         createdAt: rawUser.created_at ? new Date(rawUser.created_at) : new Date(),
         updatedAt: rawUser.updated_at ? new Date(rawUser.updated_at) : new Date(),
-      } as any);
+      };
+      // Explicitly create single User (not array) to fix type inference
+      const user: User = this.userRepository.create(userData as any) as User;
       return user;
     } catch (error: any) {
       console.error('Error in findByResetToken:', error);
