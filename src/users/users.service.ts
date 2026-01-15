@@ -2,6 +2,7 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,13 +12,23 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     @InjectRepository(Follow)
     private readonly followRepository: Repository<Follow>,
   ) {}
+
+  async onModuleInit() {
+    // Ensure password reset columns exist on app startup
+    try {
+      await this.ensurePasswordResetColumns();
+    } catch (error) {
+      console.error('⚠️  Could not ensure password reset columns on startup:', error);
+      // Don't throw - app can still start, columns will be added on first use
+    }
+  }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
     const user = this.userRepository.create(createUserDto);
@@ -54,18 +65,98 @@ export class UsersService {
     token: string | null,
     expires: Date | null,
   ): Promise<void> {
-    await this.userRepository.update(userId, {
-      resetPasswordToken: token,
-      resetPasswordExpires: expires,
-    } as any);
+    try {
+      // Use raw SQL to ensure it works even if TypeORM metadata is out of sync
+      await this.userRepository
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          resetPasswordToken: token,
+          resetPasswordExpires: expires,
+        } as any)
+        .where('id = :id', { id: userId })
+        .execute();
+    } catch (error: any) {
+      // If columns don't exist, try to add them and retry
+      if (error.message?.includes('resetPasswordToken') || error.message?.includes('reset_password_token')) {
+        console.error('⚠️  Password reset columns missing. Attempting to add them...');
+        await this.ensurePasswordResetColumns();
+        // Retry after adding columns
+        await this.userRepository
+          .createQueryBuilder()
+          .update(User)
+          .set({
+            resetPasswordToken: token,
+            resetPasswordExpires: expires,
+          } as any)
+          .where('id = :id', { id: userId })
+          .execute();
+      } else {
+        throw error;
+      }
+    }
   }
 
   async updatePassword(userId: string, hashedPassword: string): Promise<void> {
-    await this.userRepository.update(userId, {
-      password: hashedPassword,
-      resetPasswordToken: null,
-      resetPasswordExpires: null,
-    } as any);
+    try {
+      await this.userRepository
+        .createQueryBuilder()
+        .update(User)
+        .set({
+          password: hashedPassword,
+          resetPasswordToken: null,
+          resetPasswordExpires: null,
+        } as any)
+        .where('id = :id', { id: userId })
+        .execute();
+    } catch (error: any) {
+      // If columns don't exist, try to add them and retry
+      if (error.message?.includes('resetPasswordToken') || error.message?.includes('reset_password_token')) {
+        console.error('⚠️  Password reset columns missing. Attempting to add them...');
+        await this.ensurePasswordResetColumns();
+        // Retry after adding columns
+        await this.userRepository
+          .createQueryBuilder()
+          .update(User)
+          .set({
+            password: hashedPassword,
+            resetPasswordToken: null,
+            resetPasswordExpires: null,
+          } as any)
+          .where('id = :id', { id: userId })
+          .execute();
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  private async ensurePasswordResetColumns(): Promise<void> {
+    const queryRunner = this.userRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    try {
+      await queryRunner.query(`
+        DO $$ 
+        BEGIN
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'reset_password_token'
+          ) THEN
+            ALTER TABLE users ADD COLUMN reset_password_token VARCHAR(255) NULL;
+          END IF;
+          
+          IF NOT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'users' AND column_name = 'reset_password_expires'
+          ) THEN
+            ALTER TABLE users ADD COLUMN reset_password_expires TIMESTAMP NULL;
+          END IF;
+        END $$;
+      `);
+      console.log('✅ Password reset columns ensured!');
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async update(id: string, updateUserDto: UpdateUserDto): Promise<User | null> {
