@@ -17,7 +17,7 @@ import {
   FileFieldsInterceptor,
   FileInterceptor,
 } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { StudentsService } from './students.service';
 import { CreateSkillDto } from './dto/create-skill.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -88,22 +88,9 @@ export class StudentsController {
   @Post(':id/profile-image')
   @UseInterceptors(
     FileInterceptor('profileImage', {
-      storage: diskStorage({
-        destination: './uploads/profiles',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            'profile-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
       limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB limit
+        fileSize: 10 * 1024 * 1024, // 10MB limit (increased for Cloudinary)
       },
       fileFilter: (req, file, cb) => {
         if (!file.mimetype.match(/^image\/(jpeg|png|jpg|webp)$/)) {
@@ -134,21 +121,10 @@ export class StudentsController {
   @Post(':id/projects')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: './uploads/projects',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname +
-              '-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      },
     }),
   )
   addProject(
@@ -162,21 +138,10 @@ export class StudentsController {
   @Put(':id/projects/:projectId')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: './uploads/projects',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname +
-              '-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      },
     }),
   )
   updateProject(
@@ -205,21 +170,10 @@ export class StudentsController {
   @Post(':id/achievements')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: './uploads/achievements',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname +
-              '-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      },
     }),
   )
   addAchievement(
@@ -233,21 +187,10 @@ export class StudentsController {
   @Put(':id/achievements/:achievementId')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: './uploads/achievements',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname +
-              '-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      },
     }),
   )
   updateAchievement(
@@ -276,21 +219,10 @@ export class StudentsController {
   @Post(':id/talents')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: './uploads/talents',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname +
-              '-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      },
     }),
   )
   addTalent(
@@ -304,21 +236,10 @@ export class StudentsController {
   @Put(':id/talents/:talentId')
   @UseInterceptors(
     FileFieldsInterceptor([{ name: 'files', maxCount: 10 }], {
-      storage: diskStorage({
-        destination: './uploads/talents',
-        filename: (req, file, cb) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(
-            null,
-            file.fieldname +
-              '-' +
-              uniqueSuffix +
-              '.' +
-              file.originalname.split('.').pop(),
-          );
-        },
-      }),
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit per file
+      },
     }),
   )
   updateTalent(

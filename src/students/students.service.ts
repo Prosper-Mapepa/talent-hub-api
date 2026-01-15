@@ -23,6 +23,7 @@ import { LikeTalentDto } from './dto/like-talent.dto';
 import { SaveTalentDto } from './dto/save-talent.dto';
 import { CollaborationRequestDto } from './dto/collaboration-request.dto';
 import { User } from '../users/entities/user.entity';
+import { CloudinaryService } from '../common/services/cloudinary.service';
 
 @Injectable()
 export class StudentsService {
@@ -39,6 +40,7 @@ export class StudentsService {
     private skillsRepository: Repository<Skill>,
     @InjectRepository(Collaboration)
     private collaborationsRepository: Repository<Collaboration>,
+    private cloudinaryService: CloudinaryService,
   ) {}
 
   async create(createStudentDto: any): Promise<Student> {
@@ -101,10 +103,17 @@ export class StudentsService {
     const student = await this.findOne(studentId);
     let images: string[] = [];
 
-    if (files && files.files) {
-      images = files.files.map(
-        (file: any) => `/uploads/projects/${file.filename}`,
-      );
+    if (files && files.files && files.files.length > 0) {
+      try {
+        const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
+          files.files,
+          'projects',
+        );
+        images = uploadResults.map((result) => result.secure_url);
+      } catch (error) {
+        console.error('Error uploading project files to Cloudinary:', error);
+        throw new Error('Failed to upload project files');
+      }
     }
 
     const project = this.projectsRepository.create({
@@ -129,10 +138,17 @@ export class StudentsService {
     }
 
     let images: string[] = project.images || [];
-    if (files && files.files) {
-      images = files.files.map(
-        (file: any) => `/uploads/projects/${file.filename}`,
-      );
+    if (files && files.files && files.files.length > 0) {
+      try {
+        const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
+          files.files,
+          'projects',
+        );
+        images = uploadResults.map((result) => result.secure_url);
+      } catch (error) {
+        console.error('Error uploading project files to Cloudinary:', error);
+        throw new Error('Failed to upload project files');
+      }
     }
 
     Object.assign(project, { ...updateProjectDto, images });
@@ -158,10 +174,20 @@ export class StudentsService {
     const student = await this.findOne(studentId);
     let fileArr: string[] = [];
 
-    if (files && files.files) {
-      fileArr = files.files.map(
-        (file: any) => `/uploads/achievements/${file.filename}`,
-      );
+    if (files && files.files && files.files.length > 0) {
+      try {
+        const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
+          files.files,
+          'achievements',
+        );
+        fileArr = uploadResults.map((result) => result.secure_url);
+      } catch (error) {
+        console.error(
+          'Error uploading achievement files to Cloudinary:',
+          error,
+        );
+        throw new Error('Failed to upload achievement files');
+      }
     }
 
     const achievement = this.achievementsRepository.create({
@@ -186,10 +212,20 @@ export class StudentsService {
     }
 
     let fileArr: string[] = achievement.files || [];
-    if (files && files.files) {
-      fileArr = files.files.map(
-        (file: any) => `/uploads/achievements/${file.filename}`,
-      );
+    if (files && files.files && files.files.length > 0) {
+      try {
+        const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
+          files.files,
+          'achievements',
+        );
+        fileArr = uploadResults.map((result) => result.secure_url);
+      } catch (error) {
+        console.error(
+          'Error uploading achievement files to Cloudinary:',
+          error,
+        );
+        throw new Error('Failed to upload achievement files');
+      }
     }
 
     Object.assign(achievement, { ...updateAchievementDto, files: fileArr });
@@ -218,10 +254,17 @@ export class StudentsService {
     const student = await this.findOne(studentId);
     let filePaths: string[] = [];
 
-    if (files && files.files) {
-      filePaths = files.files.map(
-        (file: any) => `/uploads/talents/${file.filename}`,
-      );
+    if (files && files.files && files.files.length > 0) {
+      try {
+        const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
+          files.files,
+          'talents',
+        );
+        filePaths = uploadResults.map((result) => result.secure_url);
+      } catch (error) {
+        console.error('Error uploading talent files to Cloudinary:', error);
+        throw new Error('Failed to upload talent files');
+      }
     }
 
     const talent = this.talentsRepository.create({
@@ -246,10 +289,17 @@ export class StudentsService {
     }
 
     let filePaths: string[] = talent.files || [];
-    if (files && files.files) {
-      filePaths = files.files.map(
-        (file: any) => `/uploads/talents/${file.filename}`,
-      );
+    if (files && files.files && files.files.length > 0) {
+      try {
+        const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
+          files.files,
+          'talents',
+        );
+        filePaths = uploadResults.map((result) => result.secure_url);
+      } catch (error) {
+        console.error('Error uploading talent files to Cloudinary:', error);
+        throw new Error('Failed to upload talent files');
+      }
     }
 
     Object.assign(talent, { ...updateTalentDto, files: filePaths });
@@ -279,22 +329,42 @@ export class StudentsService {
   ): Promise<Student> {
     const student = await this.findOne(studentId);
 
-    // Delete old profile image if it exists
-    if (student.profileImage) {
-      // Note: In production, you'd want to delete the actual file from disk
-      // For now, we'll just update the database
+    // Delete old profile image if it exists (Cloudinary)
+    if (student.profileImage && student.profileImage.startsWith('http')) {
+      try {
+        await this.cloudinaryService.deleteFileByUrl(student.profileImage);
+      } catch (error) {
+        console.error('Error deleting old profile image:', error);
+      }
     }
 
-    // Update student with new profile image path
-    student.profileImage = `/uploads/profiles/${file.filename}`;
+    // Upload to Cloudinary
+    try {
+      const uploadResult = await this.cloudinaryService.uploadFile(
+        file,
+        'profiles',
+      );
+      student.profileImage = uploadResult.secure_url;
+    } catch (error) {
+      console.error('Error uploading profile image to Cloudinary:', error);
+      throw new Error('Failed to upload profile image');
+    }
+
     return this.studentsRepository.save(student);
   }
 
   async deleteProfileImage(studentId: string): Promise<Student> {
     const student = await this.findOne(studentId);
 
-    // Note: In production, you'd want to delete the actual file from disk
-    // For now, we'll just update the database
+    // Delete from Cloudinary if it's a Cloudinary URL
+    if (student.profileImage && student.profileImage.startsWith('http')) {
+      try {
+        await this.cloudinaryService.deleteFileByUrl(student.profileImage);
+      } catch (error) {
+        console.error('Error deleting profile image from Cloudinary:', error);
+      }
+    }
+
     student.profileImage = '';
     return this.studentsRepository.save(student);
   }

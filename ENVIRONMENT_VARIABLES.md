@@ -28,6 +28,13 @@ These are **automatically provided** by Railway if you add a PostgreSQL service 
   - Example: `https://your-frontend.netlify.app,https://www.your-frontend.netlify.app`
   - For development: `http://localhost:3000,http://localhost:3001`
 
+### Cloudinary (File Storage)
+- `CLOUDINARY_CLOUD_NAME` - Your Cloudinary cloud name (REQUIRED for file uploads)
+- `CLOUDINARY_API_KEY` - Your Cloudinary API key (REQUIRED for file uploads)
+- `CLOUDINARY_API_SECRET` - Your Cloudinary API secret (REQUIRED for file uploads)
+  - Get these from: https://console.cloudinary.com/
+  - Free tier: 25GB storage, 25GB bandwidth/month
+
 ## Optional Variables
 
 - `FRONTEND_URL` - Frontend URL for redirects/links
@@ -65,6 +72,9 @@ CORS_ORIGINS=https://your-frontend.netlify.app,https://www.your-frontend.netlify
 JWT_EXPIRES_IN=7d
 LOG_LEVEL=info
 FRONTEND_URL=https://your-frontend.netlify.app
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 ```
 
 **Note:** Database variables (`DB_HOST`, `DB_PORT`, etc.) are automatically set when you link the PostgreSQL service.

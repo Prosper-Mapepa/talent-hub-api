@@ -8,6 +8,7 @@ import { Project } from './entities/project.entity';
 import { Achievement } from './entities/achievement.entity';
 import { StudentTalent } from './entities/talent.entity';
 import { Collaboration } from './entities/collaboration.entity';
+import { CloudinaryModule } from '../common/services/cloudinary.module';
 
 @Module({
   imports: [
@@ -19,9 +20,10 @@ import { Collaboration } from './entities/collaboration.entity';
       StudentTalent,
       Collaboration,
     ]),
+    CloudinaryModule,
   ],
   controllers: [StudentsController],
   providers: [StudentsService],
   exports: [StudentsService],
 })
-export class StudentsModule {} 
+export class StudentsModule {}
