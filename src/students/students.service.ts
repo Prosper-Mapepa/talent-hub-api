@@ -317,26 +317,31 @@ export class StudentsService {
     }
 
     const oldFiles: string[] = talent.files || [];
-    let filePaths: string[] = oldFiles;
+    // Get existing files to keep from DTO (if provided)
+    const existingFilesToKeep: string[] = (updateTalentDto as any).existingFiles || oldFiles;
+    
+    let filePaths: string[] = existingFilesToKeep;
 
+    // If new files are uploaded, add them to the existing files
     if (files && files.files && files.files.length > 0) {
       try {
         const uploadResults = await this.cloudinaryService.uploadMultipleFiles(
           files.files,
           'talents',
         );
-        filePaths = uploadResults.map((result) => result.secure_url);
-
-        // Delete old Cloudinary files that are being replaced
-        const filesToDelete = oldFiles.filter(
-          (oldUrl) => !filePaths.includes(oldUrl) && oldUrl.startsWith('http'),
-        );
-        await this.deleteCloudinaryFiles(filesToDelete);
+        const newFileUrls = uploadResults.map((result) => result.secure_url);
+        filePaths = [...existingFilesToKeep, ...newFileUrls];
       } catch (error) {
         console.error('Error uploading talent files to Cloudinary:', error);
         throw new Error('Failed to upload talent files');
       }
     }
+
+    // Delete old Cloudinary files that are no longer in the keep list
+    const filesToDelete = oldFiles.filter(
+      (oldUrl) => !filePaths.includes(oldUrl) && oldUrl.startsWith('http'),
+    );
+    await this.deleteCloudinaryFiles(filesToDelete);
 
     Object.assign(talent, { ...updateTalentDto, files: filePaths });
     return this.talentsRepository.save(talent);

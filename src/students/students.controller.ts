@@ -245,9 +245,30 @@ export class StudentsController {
   updateTalent(
     @Param('id') id: string,
     @Param('talentId') talentId: string,
-    @Body() updateTalentDto: UpdateTalentDto,
+    @Body() body: any,
     @UploadedFiles() files: { files?: Express.Multer.File[] },
   ) {
+    // Parse existingFiles from body if provided (sent as JSON string in form-data)
+    let existingFiles: string[] | undefined;
+    if (body.existingFiles) {
+      try {
+        existingFiles = typeof body.existingFiles === 'string' 
+          ? JSON.parse(body.existingFiles) 
+          : body.existingFiles;
+      } catch (error) {
+        console.error('Error parsing existingFiles:', error);
+      }
+    }
+
+    const updateTalentDto: UpdateTalentDto = {
+      title: body.title,
+      category: body.category,
+      description: body.description,
+    };
+
+    // Add existingFiles to DTO for service to use
+    (updateTalentDto as any).existingFiles = existingFiles;
+
     return this.studentsService.updateTalent(
       id,
       talentId,
