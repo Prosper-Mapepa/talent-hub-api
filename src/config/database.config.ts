@@ -10,10 +10,14 @@ export const databaseConfig: TypeOrmModuleOptions = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   autoLoadEntities: true,
-  synchronize: false,
-  migrationsRun: true,
+  synchronize: false, // Never use synchronize in production
+  migrationsRun: true, // Auto-run migrations on startup
   logging: true,
   entities: [__dirname + '/../**/*.entity.{js,ts}'],
   migrations: [__dirname + '/../database/migrations/*.{js,ts}'],
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-}; 
+  migrationsTableName: 'migrations',
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
+};
