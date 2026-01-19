@@ -105,6 +105,15 @@ export class AuthService {
         errors: { email: ['Email already exists'] },
       });
     }
+    
+    // Require EULA acceptance
+    if (!dto.agreedToTerms || dto.agreedToTerms !== true) {
+      throw new BadRequestException({
+        message: 'You must accept the Terms of Service to register',
+        errors: { agreedToTerms: ['Terms acceptance is required'] },
+      });
+    }
+    
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     // Create user
@@ -123,6 +132,10 @@ export class AuthService {
       year: dto.year,
       user: user,
     });
+    
+    // Note: EULA acceptance is tracked separately via moderation service
+    // We'll accept it after user creation if needed via the moderation endpoint
+    
     // Create JWT token for the new user
     const payload = { email: user.email, sub: user.id, role: user.role };
     const access_token = this.jwtService.sign(payload);
@@ -155,6 +168,15 @@ export class AuthService {
         errors: { email: ['Email already exists'] },
       });
     }
+    
+    // Require EULA acceptance
+    if (!dto.agreedToTerms || dto.agreedToTerms !== true) {
+      throw new BadRequestException({
+        message: 'You must accept the Terms of Service to register',
+        errors: { agreedToTerms: ['Terms acceptance is required'] },
+      });
+    }
+    
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     // Create user
@@ -172,6 +194,10 @@ export class AuthService {
       location: dto.location,
       user: user,
     } as CreateBusinessDto);
+    
+    // Note: EULA acceptance is tracked separately via moderation service
+    // We'll accept it after user creation if needed via the moderation endpoint
+    
     // Create JWT token for the new user
     const payload = { email: user.email, sub: user.id, role: user.role };
     const access_token = this.jwtService.sign(payload);

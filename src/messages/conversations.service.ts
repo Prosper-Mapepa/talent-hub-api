@@ -1,9 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, SelectQueryBuilder } from 'typeorm';
 import { Conversation } from './entities/conversation.entity';
 import { User } from '../users/entities/user.entity';
 import { Message } from './entities/message.entity';
+import { ContentFilterService } from '../moderation/services/content-filter.service';
+import { ModerationService } from '../moderation/moderation.service';
 
 @Injectable()
 export class ConversationsService {
@@ -14,6 +16,8 @@ export class ConversationsService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(Message)
     private readonly messageRepository: Repository<Message>,
+    private readonly contentFilterService: ContentFilterService,
+    private readonly moderationService: ModerationService,
   ) {}
 
   async findAllForUser(userId: string): Promise<Conversation[]> {
@@ -22,54 +26,85 @@ export class ConversationsService {
       .leftJoinAndSelect('conversation.participants', 'participants')
       .leftJoinAndSelect('participants.student', 'student')
       .leftJoinAndSelect('participants.business', 'business')
-      .innerJoin('conversation_participants', 'cp', 'cp.conversation_id = conversation.id')
+      .innerJoin(
+        'conversation_participants',
+        'cp',
+        'cp.conversation_id = conversation.id',
+      )
       .where('cp.user_id = :userId', { userId })
       .orderBy('conversation.updatedAt', 'DESC')
       .getMany();
 
-    // Load last message for each conversation
+    // Filter out conversations with blocked users
+    const filteredConversations = [];
     for (const conversation of conversations) {
-      const messages = await this.messageRepository.find({
-        where: { conversationId: conversation.id },
-        order: { createdAt: 'DESC' },
-        take: 1,
-      });
-      if (messages.length > 0) {
-        (conversation as any).lastMessage = messages[0];
+      // Check if any participant is blocked
+      let shouldInclude = true;
+      for (const participant of conversation.participants) {
+        if (participant.id !== userId) {
+          const isBlocked = await this.moderationService.isBlocked(
+            userId,
+            participant.id,
+          );
+          if (isBlocked) {
+            shouldInclude = false;
+            break;
+          }
+        }
+      }
+
+      if (shouldInclude) {
+        // Load last message for each conversation
+        const messages = await this.messageRepository.find({
+          where: { conversationId: conversation.id },
+          order: { createdAt: 'DESC' },
+          take: 1,
+        });
+        if (messages.length > 0) {
+          (conversation as any).lastMessage = messages[0];
+        }
+        filteredConversations.push(conversation);
       }
     }
 
-    return conversations;
+    return filteredConversations;
   }
 
   async create(participantIds: string[]): Promise<Conversation> {
     // Validate participantIds
-    if (!participantIds || !Array.isArray(participantIds) || participantIds.length === 0) {
+    if (
+      !participantIds ||
+      !Array.isArray(participantIds) ||
+      participantIds.length === 0
+    ) {
       throw new NotFoundException('Participant IDs are required');
     }
-    
+
     // Filter out any undefined, null, or invalid values
     const validParticipantIds = participantIds.filter(
-      id => id && typeof id === 'string' && id.trim() !== '' && id !== 'undefined'
+      (id) =>
+        id && typeof id === 'string' && id.trim() !== '' && id !== 'undefined',
     );
-    
+
     if (validParticipantIds.length !== participantIds.length) {
       throw new NotFoundException('Invalid participant IDs provided');
     }
-    
+
     if (validParticipantIds.length < 2) {
       throw new NotFoundException('At least 2 participants are required');
     }
-    
+
     const users = await this.userRepository.find({
       where: { id: In(validParticipantIds) },
       relations: ['student', 'business'],
     });
-    
+
     if (users.length !== validParticipantIds.length) {
-      throw new NotFoundException(`One or more users not found. Expected ${validParticipantIds.length}, found ${users.length}`);
+      throw new NotFoundException(
+        `One or more users not found. Expected ${validParticipantIds.length}, found ${users.length}`,
+      );
     }
-    
+
     // Check if a conversation already exists between these participants
     // For 2 participants, find conversations that have exactly these 2 participants
     if (validParticipantIds.length === 2) {
@@ -78,27 +113,41 @@ export class ConversationsService {
         .innerJoin('conversation.participants', 'participant')
         .where('participant.id IN (:...ids)', { ids: validParticipantIds })
         .groupBy('conversation.id')
-        .having('COUNT(DISTINCT participant.id) = :count', { count: validParticipantIds.length })
+        .having('COUNT(DISTINCT participant.id) = :count', {
+          count: validParticipantIds.length,
+        })
         .getMany();
-      
+
       // Check if any of these conversations has exactly these 2 participants (no more, no less)
       for (const existingConv of existingConversations) {
         const convWithParticipants = await this.conversationRepository.findOne({
           where: { id: existingConv.id },
           relations: ['participants'],
         });
-        
-        if (convWithParticipants && convWithParticipants.participants.length === validParticipantIds.length) {
-          const convParticipantIds = convWithParticipants.participants.map(p => p.id).sort();
+
+        if (
+          convWithParticipants &&
+          convWithParticipants.participants.length ===
+            validParticipantIds.length
+        ) {
+          const convParticipantIds = convWithParticipants.participants
+            .map((p) => p.id)
+            .sort();
           const requestedIds = [...validParticipantIds].sort();
-          
-          if (convParticipantIds.length === requestedIds.length &&
-              convParticipantIds.every((id, index) => id === requestedIds[index])) {
+
+          if (
+            convParticipantIds.length === requestedIds.length &&
+            convParticipantIds.every((id, index) => id === requestedIds[index])
+          ) {
             // Found existing conversation with exact same participants
             // Return it with full relations
             const found = await this.conversationRepository.findOne({
               where: { id: existingConv.id },
-              relations: ['participants', 'participants.student', 'participants.business'],
+              relations: [
+                'participants',
+                'participants.student',
+                'participants.business',
+              ],
             });
             if (!found) throw new NotFoundException('Conversation not found');
             return found;
@@ -106,28 +155,37 @@ export class ConversationsService {
         }
       }
     }
-    
+
     // No existing conversation found, create a new one
     const conversation = this.conversationRepository.create();
     const saved = await this.conversationRepository.save(conversation);
-    
+
     // Add participants to the conversation
     saved.participants = users;
     const savedWithParticipants = await this.conversationRepository.save(saved);
-    
+
     // Fetch with participants and their relations
     const found = await this.conversationRepository.findOne({
       where: { id: savedWithParticipants.id },
-      relations: ['participants', 'participants.student', 'participants.business'],
+      relations: [
+        'participants',
+        'participants.student',
+        'participants.business',
+      ],
     });
-    if (!found) throw new NotFoundException('Conversation not found after creation');
+    if (!found)
+      throw new NotFoundException('Conversation not found after creation');
     return found;
   }
 
   async findOne(id: string): Promise<Conversation> {
     const conversation = await this.conversationRepository.findOne({
       where: { id },
-      relations: ['participants', 'participants.student', 'participants.business'],
+      relations: [
+        'participants',
+        'participants.student',
+        'participants.business',
+      ],
     });
     if (!conversation) throw new NotFoundException('Conversation not found');
     return conversation;
@@ -137,16 +195,61 @@ export class ConversationsService {
     await this.conversationRepository.delete(id);
   }
 
-  async getMessages(conversationId: string): Promise<Message[]> {
+  async getMessages(conversationId: string, userId: string): Promise<Message[]> {
+    // Verify user is a participant
+    const conversation = await this.conversationRepository.findOne({
+      where: { id: conversationId },
+      relations: ['participants'],
+    });
+    
+    if (!conversation) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    const isParticipant = conversation.participants.some(
+      (p) => p.id === userId,
+    );
+    
+    if (!isParticipant) {
+      throw new ForbiddenException(
+        'You do not have access to this conversation',
+      );
+    }
+
+    // Check if conversation participant is blocked
+    const otherParticipant = conversation.participants.find(
+      (p) => p.id !== userId,
+    );
+    
+    if (otherParticipant) {
+      const isBlocked = await this.moderationService.isBlocked(
+        userId,
+        otherParticipant.id,
+      );
+      if (isBlocked) {
+        throw new ForbiddenException(
+          'You cannot view messages from blocked users',
+        );
+      }
+    }
+
     return this.messageRepository.find({
       where: { conversationId: conversationId },
       order: { createdAt: 'ASC' },
     });
   }
 
-  async sendMessage(conversationId: string, senderId: string, content: string): Promise<Message> {
+  async sendMessage(
+    conversationId: string,
+    senderId: string,
+    content: string,
+  ): Promise<Message> {
     // Validate inputs
-    if (!conversationId || conversationId === 'undefined' || !conversationId.trim()) {
+    if (
+      !conversationId ||
+      conversationId === 'undefined' ||
+      !conversationId.trim()
+    ) {
       throw new NotFoundException('Conversation ID is required');
     }
     if (!senderId || senderId === 'undefined' || !senderId.trim()) {
@@ -155,32 +258,69 @@ export class ConversationsService {
     if (!content || !content.trim()) {
       throw new NotFoundException('Message content is required');
     }
-    
-    const conversation = await this.conversationRepository.findOne({ 
+
+    const conversation = await this.conversationRepository.findOne({
       where: { id: conversationId },
-      relations: ['participants']
+      relations: ['participants'],
     });
     if (!conversation) throw new NotFoundException('Conversation not found');
-    
+
     // Verify sender is a participant
-    const senderIsParticipant = conversation.participants.some(p => p.id === senderId);
+    const senderIsParticipant = conversation.participants.some(
+      (p) => p.id === senderId,
+    );
     if (!senderIsParticipant) {
-      throw new NotFoundException('Sender is not a participant in this conversation');
+      throw new NotFoundException(
+        'Sender is not a participant in this conversation',
+      );
     }
-    
+
     // Find the other participant to set as receiverId
-    const otherParticipant = conversation.participants.find(p => p.id !== senderId);
-    
+    const otherParticipant = conversation.participants.find(
+      (p) => p.id !== senderId,
+    );
+
     if (!otherParticipant || !otherParticipant.id) {
       throw new NotFoundException('No recipient found for this conversation');
     }
+
+    // Check if users have blocked each other
+    const isSenderBlocked = await this.moderationService.isBlocked(
+      otherParticipant.id,
+      senderId,
+    );
+    if (isSenderBlocked) {
+      throw new ForbiddenException(
+        'You cannot send messages to this user. They have blocked you.',
+      );
+    }
+
+    const isReceiverBlocked = await this.moderationService.isBlocked(
+      senderId,
+      otherParticipant.id,
+    );
+    if (isReceiverBlocked) {
+      throw new ForbiddenException(
+        'You cannot send messages to this user. You have blocked them.',
+      );
+    }
+
+    // Filter objectionable content
+    const sanitized = this.contentFilterService.sanitizeContent(content);
     
+    // If content contains objectionable material, throw an error
+    if (this.contentFilterService.containsObjectionableContent(content)) {
+      throw new ForbiddenException(
+        'Message contains inappropriate content and cannot be sent.',
+      );
+    }
+
     const message = this.messageRepository.create({
       conversationId: conversationId,
       senderId,
-      content: content.trim(),
+      content: sanitized.content.trim(),
       receiverId: otherParticipant.id,
     });
     return this.messageRepository.save(message);
   }
-} 
+}

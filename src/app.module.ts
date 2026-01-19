@@ -22,6 +22,7 @@ import { BusinessesModule } from './businesses/businesses.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MessagesModule } from './messages/messages.module';
 import { AdminModule } from './admin/admin.module';
+import { ModerationModule } from './moderation/moderation.module';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { AdminModule } from './admin/admin.module';
     TypeOrmModule.forRoot(databaseConfig),
     ThrottlerModule.forRoot(),
     ServeStaticModule.forRoot({
-      rootPath: join(process.cwd(),'uploads'),
+      rootPath: join(process.cwd(), 'uploads'),
       serveRoot: '/uploads',
       // Add CORS headers for static files
       serveStaticOptions: {
@@ -46,6 +47,7 @@ import { AdminModule } from './admin/admin.module';
     JobsModule,
     MessagesModule,
     AdminModule,
+    ModerationModule,
   ],
   controllers: [AppController],
   providers: [
