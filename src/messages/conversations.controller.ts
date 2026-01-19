@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Param, Body, Delete, Req } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Body,
+  Delete,
+  Req,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { Public } from '../auth/decorators/public.decorator';
 // import { AuthGuard } from '../auth/guards/auth.guard'; // Uncomment if you want to protect routes
@@ -19,14 +27,17 @@ export class ConversationsController {
       // If no userId provided, return empty array
       return { data: [] };
     }
-    const conversations = await this.conversationsService.findAllForUser(userId);
+    const conversations =
+      await this.conversationsService.findAllForUser(userId);
     return { data: conversations };
   }
 
   @Post()
   @Public()
   async create(@Body() createConversationDto: { participantIds: string[] }) {
-    const conversation = await this.conversationsService.create(createConversationDto.participantIds);
+    const conversation = await this.conversationsService.create(
+      createConversationDto.participantIds,
+    );
     return { data: conversation };
   }
 
@@ -42,13 +53,25 @@ export class ConversationsController {
 
   @Get(':id/messages')
   @Public()
-  async getMessages(@Param('id') id: string) {
-    return this.conversationsService.getMessages(id);
+  async getMessages(@Param('id') id: string, @Req() req: Request) {
+    const userId = req.query.userId as string;
+    if (!userId) {
+      return { success: false, message: 'User ID is required' };
+    }
+    const messages = await this.conversationsService.getMessages(id, userId);
+    return { data: messages };
   }
 
   @Post(':id/messages')
   @Public()
-  async sendMessage(@Param('id') id: string, @Body() createMessageDto: { senderId: string, content: string }) {
-    return this.conversationsService.sendMessage(id, createMessageDto.senderId, createMessageDto.content);
+  async sendMessage(
+    @Param('id') id: string,
+    @Body() createMessageDto: { senderId: string; content: string },
+  ) {
+    return this.conversationsService.sendMessage(
+      id,
+      createMessageDto.senderId,
+      createMessageDto.content,
+    );
   }
-} 
+}
