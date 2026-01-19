@@ -229,8 +229,8 @@ export class ModerationController {
     description: 'Admin access required',
   })
   async getAllReports(
-    @Query('status') status?: string,
     @Res() res: Response,
+    @Query('status') status: string | undefined,
   ) {
     const reports = status
       ? await this.moderationService.getPendingReports()
