@@ -30,7 +30,7 @@ export class UserEulaAcceptance {
   @JoinColumn({ name: 'eula_version_id' })
   eulaVersion: EulaVersion;
 
-  @Column({ name: 'ip_address', nullable: true })
+  @Column({ name: 'ip_address', type: 'varchar', length: 45, nullable: true })
   ipAddress: string | null;
 
   @CreateDateColumn({ name: 'accepted_at' })
