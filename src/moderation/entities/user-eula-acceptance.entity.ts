@@ -16,14 +16,14 @@ export class UserEulaAcceptance {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ name: 'eula_version_id' })
+  @Column({ name: 'eula_version_id', type: 'uuid' })
   eulaVersionId: string;
 
   @ManyToOne(() => EulaVersion)

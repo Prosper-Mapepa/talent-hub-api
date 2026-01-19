@@ -15,14 +15,14 @@ export class BlockedUser {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'blocker_id' })
+  @Column({ name: 'blocker_id', type: 'uuid' })
   blockerId: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'blocker_id' })
   blocker: User;
 
-  @Column({ name: 'blocked_user_id' })
+  @Column({ name: 'blocked_user_id', type: 'uuid' })
   blockedUserId: string;
 
   @ManyToOne(() => User)

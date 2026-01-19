@@ -38,14 +38,14 @@ export class ContentReport {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'reporter_id' })
+  @Column({ name: 'reporter_id', type: 'uuid' })
   reporterId: string;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'reporter_id' })
   reporter: User;
 
-  @Column({ name: 'reported_user_id', nullable: true })
+  @Column({ name: 'reported_user_id', type: 'uuid', nullable: true })
   reportedUserId: string | null;
 
   @ManyToOne(() => User, { nullable: true })
@@ -55,7 +55,7 @@ export class ContentReport {
   @Column({ type: 'enum', enum: ReportType })
   type: ReportType;
 
-  @Column({ name: 'content_id', nullable: true })
+  @Column({ name: 'content_id', type: 'uuid', nullable: true })
   contentId: string | null; // ID of the specific content (message, project, etc.)
 
   @Column({ type: 'enum', enum: ReportReason })
@@ -67,7 +67,7 @@ export class ContentReport {
   @Column({ type: 'enum', enum: ReportStatus, default: ReportStatus.PENDING })
   status: ReportStatus;
 
-  @Column({ name: 'reviewed_by', nullable: true })
+  @Column({ name: 'reviewed_by', type: 'uuid', nullable: true })
   reviewedBy: string | null;
 
   @ManyToOne(() => User, { nullable: true })
