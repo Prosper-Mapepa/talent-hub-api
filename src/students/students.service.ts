@@ -24,6 +24,7 @@ import { SaveTalentDto } from './dto/save-talent.dto';
 import { CollaborationRequestDto } from './dto/collaboration-request.dto';
 import { User } from '../users/entities/user.entity';
 import { CloudinaryService } from '../common/services/cloudinary.service';
+import { ModerationService } from '../moderation/moderation.service';
 
 @Injectable()
 export class StudentsService {
@@ -41,6 +42,7 @@ export class StudentsService {
     @InjectRepository(Collaboration)
     private collaborationsRepository: Repository<Collaboration>,
     private cloudinaryService: CloudinaryService,
+    private moderationService: ModerationService,
   ) {}
 
   async create(createStudentDto: any): Promise<Student> {
@@ -59,7 +61,7 @@ export class StudentsService {
     });
   }
 
-  async findOne(id: string): Promise<Student> {
+  async findOne(id: string, viewerUserId?: string): Promise<Student> {
     const student = await this.studentsRepository.findOne({
       where: { id },
       relations: ['user', 'talents', 'skills', 'projects', 'achievements'],
@@ -67,6 +69,21 @@ export class StudentsService {
     if (!student) {
       throw new NotFoundException('Student not found');
     }
+
+    // Check if viewer has been blocked by this student
+    // If the student blocked the viewer, the viewer cannot see the profile
+    if (viewerUserId && student.user?.id) {
+      const isViewerBlocked = await this.moderationService.isBlocked(
+        student.user.id,
+        viewerUserId,
+      );
+      if (isViewerBlocked) {
+        throw new ForbiddenException(
+          'You cannot view this profile. This user has blocked you.',
+        );
+      }
+    }
+
     return student;
   }
 
@@ -443,7 +460,7 @@ export class StudentsService {
     return this.studentsRepository.save(student);
   }
 
-  async getAllTalents(): Promise<StudentTalent[]> {
+  async getAllTalents(viewerUserId?: string): Promise<StudentTalent[]> {
     const talents = await this.talentsRepository.find({
       relations: ['student', 'student.user'],
       order: { createdAt: 'DESC' },
@@ -451,6 +468,32 @@ export class StudentsService {
     console.log(
       `[StudentsService.getAllTalents] Found ${talents?.length || 0} talents in database`,
     );
+
+    // If viewer is authenticated, filter out talents from users they've blocked
+    if (viewerUserId && talents.length > 0) {
+      const filteredTalents = [];
+      for (const talent of talents) {
+        if (talent.student?.user?.id) {
+          // Check if viewer has blocked this user
+          const isBlocked = await this.moderationService.isBlocked(
+            viewerUserId,
+            talent.student.user.id,
+          );
+          // Only include if viewer hasn't blocked this user
+          if (!isBlocked) {
+            filteredTalents.push(talent);
+          }
+        } else {
+          // Include talents without user info (shouldn't happen, but safe fallback)
+          filteredTalents.push(talent);
+        }
+      }
+      console.log(
+        `[StudentsService.getAllTalents] Filtered to ${filteredTalents.length} talents after blocking check`,
+      );
+      return filteredTalents;
+    }
+
     return talents || [];
   }
 
@@ -680,5 +723,33 @@ export class StudentsService {
     });
 
     return studentsWhoLiked;
+  }
+
+  async getTalentLikes(talentId: string): Promise<{ count: number; users: Student[] }> {
+    // Find all students whose likedTalents array contains this talentId
+    const studentsWhoLiked = await this.studentsRepository.find({
+      where: {
+        likedTalents: ArrayOverlap([talentId]),
+      },
+      relations: ['user'],
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        profileImage: true,
+        email: true,
+        user: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+    });
+
+    return {
+      count: studentsWhoLiked.length,
+      users: studentsWhoLiked,
+    };
   }
 }

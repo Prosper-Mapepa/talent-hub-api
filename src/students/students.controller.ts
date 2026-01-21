@@ -48,15 +48,17 @@ export class StudentsController {
   // Made public so talents can be browsed without authentication
   @Get('talents/all')
   @Public()
-  async getAllTalents() {
-    const talents = await this.studentsService.getAllTalents();
+  async getAllTalents(@CurrentUser() user?: any) {
+    const viewerUserId = user?.userId || user?.id;
+    const talents = await this.studentsService.getAllTalents(viewerUserId);
     console.log(`[getAllTalents] Returning ${talents?.length || 0} talents`);
     return talents;
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.studentsService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user?: any) {
+    const viewerUserId = user?.userId || user?.id;
+    return this.studentsService.findOne(id, viewerUserId);
   }
 
   @Patch(':id')
@@ -337,6 +339,12 @@ export class StudentsController {
   @Get(':id/who-liked-talents')
   getWhoLikedTalents(@Param('id') id: string) {
     return this.studentsService.getWhoLikedTalents(id);
+  }
+
+  @Get('talents/:talentId/likes')
+  @Public()
+  getTalentLikes(@Param('talentId') talentId: string) {
+    return this.studentsService.getTalentLikes(talentId);
   }
 
   @Put('collaboration/:collaborationId/respond')
