@@ -732,19 +732,6 @@ export class StudentsService {
         likedTalents: ArrayOverlap([talentId]),
       },
       relations: ['user'],
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        profileImage: true,
-        email: true,
-        user: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
     });
 
     return {
