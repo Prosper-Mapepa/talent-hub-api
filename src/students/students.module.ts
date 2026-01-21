@@ -9,6 +9,8 @@ import { Achievement } from './entities/achievement.entity';
 import { StudentTalent } from './entities/talent.entity';
 import { Collaboration } from './entities/collaboration.entity';
 import { CloudinaryModule } from '../common/services/cloudinary.module';
+import { ModerationModule } from '../moderation/moderation.module';
+import { forwardRef } from '@nestjs/common';
 
 @Module({
   imports: [
@@ -21,6 +23,7 @@ import { CloudinaryModule } from '../common/services/cloudinary.module';
       Collaboration,
     ]),
     CloudinaryModule,
+    forwardRef(() => ModerationModule),
   ],
   controllers: [StudentsController],
   providers: [StudentsService],
