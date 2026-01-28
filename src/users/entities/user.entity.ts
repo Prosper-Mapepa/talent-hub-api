@@ -35,7 +35,8 @@ export class User {
   @Column({ name: 'agreed_to_terms', default: true })
   agreedToTerms: boolean;
 
-  @Column({ name: 'reset_password_token', nullable: true })
+  // NOTE: `string | null` unions emit `design:type` as Object; explicitly set DB type for TypeORM/Postgres.
+  @Column({ name: 'reset_password_token', type: 'text', nullable: true })
   resetPasswordToken: string | null;
 
   @Column({ name: 'reset_password_expires', type: 'timestamp', nullable: true })
