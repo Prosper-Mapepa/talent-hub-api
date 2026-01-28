@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Business } from '../../businesses/entities/business.entity';
 import { JobType } from '../enums/job-type.enum';
 import { ExperienceLevel } from '../enums/experience-level.enum';
@@ -42,13 +51,13 @@ export class Job {
   @JoinColumn({ name: 'business_id' })
   business: Business;
 
-  @OneToMany(() => Application, application => application.job)
+  @OneToMany(() => Application, (application) => application.job)
   applications: Application[];
 
-  @OneToMany(() => Milestone, milestone => milestone.job)
+  @OneToMany(() => Milestone, (milestone) => milestone.job)
   milestones: Milestone[];
 
-  @OneToMany(() => Deliverable, deliverable => deliverable.job)
+  @OneToMany(() => Deliverable, (deliverable) => deliverable.job)
   deliverables: Deliverable[];
 
   @CreateDateColumn({ name: 'created_at' })
@@ -56,4 +65,4 @@ export class Job {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

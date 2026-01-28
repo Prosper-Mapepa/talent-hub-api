@@ -1,18 +1,31 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UsePipes, ValidationPipe, Res, NotFoundException, UseGuards } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiBody, 
-  ApiParam, 
-  ApiBadRequestResponse, 
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  UsePipes,
+  ValidationPipe,
+  Res,
+  NotFoundException,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiNoContentResponse,
   ApiBearerAuth,
   ApiUnauthorizedResponse,
-  ApiForbiddenResponse
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { BusinessesService } from './businesses.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
@@ -35,18 +48,18 @@ import { Request } from 'express';
   schema: {
     example: {
       success: false,
-      message: 'Unauthorized - Authentication required'
-    }
-  }
+      message: 'Unauthorized - Authentication required',
+    },
+  },
 })
 @ApiForbiddenResponse({
   description: 'Insufficient permissions',
   schema: {
     example: {
       success: false,
-      message: 'Forbidden - Insufficient permissions'
-    }
-  }
+      message: 'Forbidden - Insufficient permissions',
+    },
+  },
 })
 export class BusinessesController {
   constructor(
@@ -57,9 +70,9 @@ export class BusinessesController {
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create new business',
-    description: 'Create a new business profile with company information'
+    description: 'Create a new business profile with company information',
   })
   @ApiBody({
     type: CreateBusinessDto,
@@ -72,8 +85,8 @@ export class BusinessesController {
           email: 'contact@techcorp.com',
           password: 'SecurePass123!',
           businessType: 'TECHNOLOGY',
-          location: 'San Francisco, CA'
-        }
+          location: 'San Francisco, CA',
+        },
       },
       consulting: {
         summary: 'Consulting Firm',
@@ -82,8 +95,8 @@ export class BusinessesController {
           email: 'info@globalconsulting.com',
           password: 'SecurePass123!',
           businessType: 'CONSULTING',
-          location: 'New York, NY'
-        }
+          location: 'New York, NY',
+        },
       },
       healthcare: {
         summary: 'Healthcare Organization',
@@ -92,8 +105,8 @@ export class BusinessesController {
           email: 'hr@healthfirst.com',
           password: 'SecurePass123!',
           businessType: 'HEALTHCARE',
-          location: 'Boston, MA'
-        }
+          location: 'Boston, MA',
+        },
       },
       finance: {
         summary: 'Financial Institution',
@@ -102,10 +115,10 @@ export class BusinessesController {
           email: 'careers@capitalbank.com',
           password: 'SecurePass123!',
           businessType: 'FINANCE',
-          location: 'Chicago, IL'
-        }
-      }
-    }
+          location: 'Chicago, IL',
+        },
+      },
+    },
   })
   @ApiCreatedResponse({
     description: 'Business created successfully',
@@ -119,10 +132,10 @@ export class BusinessesController {
         user: {
           id: 'user-uuid',
           email: 'contact@techcorp.com',
-          role: 'business'
-        }
-      }
-    }
+          role: 'business',
+        },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Validation error or invalid data',
@@ -135,12 +148,15 @@ export class BusinessesController {
           email: ['Email must be a valid email address'],
           password: ['Password must be at least 8 characters long'],
           businessType: ['Business type must be a valid enum value'],
-          location: ['Location is required']
-        }
-      }
-    }
+          location: ['Location is required'],
+        },
+      },
+    },
   })
-  async create(@Body() createBusinessDto: CreateBusinessDto, @Res() res: Response) {
+  async create(
+    @Body() createBusinessDto: CreateBusinessDto,
+    @Res() res: Response,
+  ) {
     const result = await this.businessesService.create(createBusinessDto);
     res.locals.message = 'Business created successfully';
     return res.json({ data: result });
@@ -148,9 +164,10 @@ export class BusinessesController {
 
   @Get('jobs')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get jobs for current business',
-    description: 'Retrieve all job postings for the authenticated business user'
+    description:
+      'Retrieve all job postings for the authenticated business user',
   })
   @ApiOkResponse({
     description: 'Jobs retrieved successfully',
@@ -159,41 +176,48 @@ export class BusinessesController {
         {
           id: 'job-uuid-1',
           title: 'Junior Full Stack Developer',
-          description: 'We are looking for a passionate junior developer to join our team',
+          description:
+            'We are looking for a passionate junior developer to join our team',
           type: 'FULL_TIME',
           experienceLevel: 'ENTRY_LEVEL',
           business: {
             id: 'business-uuid',
-            businessName: 'TechCorp Solutions'
+            businessName: 'TechCorp Solutions',
           },
-          applications: []
-        }
-      ]
-    }
+          applications: [],
+        },
+      ],
+    },
   })
   async getBusinessJobs(@Req() req: Request, @Res() res: Response) {
     // Get business from user
     const user = (req as any).user;
     if (!user || !user.userId) {
-      throw new NotFoundException({ message: 'User not found', errors: { userId: ['User does not exist'] } });
+      throw new NotFoundException({
+        message: 'User not found',
+        errors: { userId: ['User does not exist'] },
+      });
     }
-    
+
     // Find business by userId
     const business = await this.businessesService.findByUserId(user.userId);
     if (!business) {
-      throw new NotFoundException({ message: 'Business profile not found', errors: { businessId: ['Business does not exist for this user'] } });
+      throw new NotFoundException({
+        message: 'Business profile not found',
+        errors: { businessId: ['Business does not exist for this user'] },
+      });
     }
-    
+
     const jobs = await this.jobsService.findByBusinessId(business.id);
     res.locals.message = 'Jobs retrieved successfully';
     return res.json({ data: jobs });
   }
 
   @Get()
-  @Roles(UserRole.ADMIN, UserRole.STUDENT, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @Roles(UserRole.ADMIN, UserRole.STUDENT, UserRole.FACULTY, UserRole.BUSINESS)
+  @ApiOperation({
     summary: 'Get all businesses',
-    description: 'Retrieve a list of all businesses with their profiles'
+    description: 'Retrieve a list of all businesses with their profiles',
   })
   @ApiOkResponse({
     description: 'List of businesses retrieved successfully',
@@ -208,8 +232,8 @@ export class BusinessesController {
           user: {
             id: 'user-uuid-1',
             email: 'contact@techcorp.com',
-            role: 'business'
-          }
+            role: 'business',
+          },
         },
         {
           id: 'uuid-2',
@@ -220,8 +244,8 @@ export class BusinessesController {
           user: {
             id: 'user-uuid-2',
             email: 'info@globalconsulting.com',
-            role: 'business'
-          }
+            role: 'business',
+          },
         },
         {
           id: 'uuid-3',
@@ -232,11 +256,11 @@ export class BusinessesController {
           user: {
             id: 'user-uuid-3',
             email: 'hr@healthfirst.com',
-            role: 'business'
-          }
-        }
-      ]
-    }
+            role: 'business',
+          },
+        },
+      ],
+    },
   })
   async findAll(@Res() res: Response) {
     const result = await this.businessesService.findAll();
@@ -246,14 +270,14 @@ export class BusinessesController {
 
   @Get(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS, UserRole.STUDENT)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get business by ID',
-    description: 'Retrieve a specific business profile by ID'
+    description: 'Retrieve a specific business profile by ID',
   })
   @ApiParam({
     name: 'id',
     description: 'Business unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiOkResponse({
     description: 'Business retrieved successfully',
@@ -267,24 +291,27 @@ export class BusinessesController {
         user: {
           id: 'user-uuid',
           email: 'contact@techcorp.com',
-          role: 'business'
-        }
-      }
-    }
+          role: 'business',
+        },
+      },
+    },
   })
   @ApiNotFoundResponse({
     description: 'Business not found',
     schema: {
       example: {
         success: false,
-        message: 'Business not found'
-      }
-    }
+        message: 'Business not found',
+      },
+    },
   })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     const result = await this.businessesService.findOne(id);
     if (!result) {
-      throw new NotFoundException({ message: 'Business not found', errors: { id: ['Business does not exist'] } });
+      throw new NotFoundException({
+        message: 'Business not found',
+        errors: { id: ['Business does not exist'] },
+      });
     }
     res.locals.message = 'Business retrieved successfully';
     return res.json({ data: result });
@@ -293,14 +320,14 @@ export class BusinessesController {
   @Patch(':id')
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update business',
-    description: 'Update business profile information'
+    description: 'Update business profile information',
   })
   @ApiParam({
     name: 'id',
     description: 'Business unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiBody({
     type: UpdateBusinessDto,
@@ -309,28 +336,28 @@ export class BusinessesController {
       updateName: {
         summary: 'Update Business Name',
         value: {
-          businessName: 'TechCorp Solutions Inc.'
-        }
+          businessName: 'TechCorp Solutions Inc.',
+        },
       },
       updateEmail: {
         summary: 'Update Email',
         value: {
-          email: 'newcontact@techcorp.com'
-        }
+          email: 'newcontact@techcorp.com',
+        },
       },
       updateLocation: {
         summary: 'Update Location',
         value: {
-          location: 'Austin, TX'
-        }
+          location: 'Austin, TX',
+        },
       },
       updateType: {
         summary: 'Update Business Type',
         value: {
-          businessType: 'CONSULTING'
-        }
-      }
-    }
+          businessType: 'CONSULTING',
+        },
+      },
+    },
   })
   @ApiOkResponse({
     description: 'Business updated successfully',
@@ -344,10 +371,10 @@ export class BusinessesController {
         user: {
           id: 'user-uuid',
           email: 'contact@techcorp.com',
-          role: 'business'
-        }
-      }
-    }
+          role: 'business',
+        },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Validation error or invalid data',
@@ -358,24 +385,31 @@ export class BusinessesController {
         errors: {
           businessName: ['Business name is required'],
           email: ['Email must be a valid email address'],
-          businessType: ['Business type must be a valid enum value']
-        }
-      }
-    }
+          businessType: ['Business type must be a valid enum value'],
+        },
+      },
+    },
   })
   @ApiNotFoundResponse({
     description: 'Business not found',
     schema: {
       example: {
         success: false,
-        message: 'Business not found'
-      }
-    }
+        message: 'Business not found',
+      },
+    },
   })
-  async update(@Param('id') id: string, @Body() updateBusinessDto: UpdateBusinessDto, @Res() res: Response) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateBusinessDto: UpdateBusinessDto,
+    @Res() res: Response,
+  ) {
     const result = await this.businessesService.update(id, updateBusinessDto);
     if (!result) {
-      throw new NotFoundException({ message: 'Business not found', errors: { id: ['Business does not exist'] } });
+      throw new NotFoundException({
+        message: 'Business not found',
+        errors: { id: ['Business does not exist'] },
+      });
     }
     res.locals.message = 'Business updated successfully';
     return res.json({ data: result });
@@ -383,35 +417,37 @@ export class BusinessesController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Delete business',
-    description: 'Permanently delete a business profile'
+    description: 'Permanently delete a business profile',
   })
   @ApiParam({
     name: 'id',
     description: 'Business unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiNoContentResponse({
-    description: 'Business deleted successfully'
+    description: 'Business deleted successfully',
   })
   @ApiNotFoundResponse({
     description: 'Business not found',
     schema: {
       example: {
         success: false,
-        message: 'Business not found'
-      }
-    }
+        message: 'Business not found',
+      },
+    },
   })
   async remove(@Param('id') id: string, @Res() res: Response) {
     const business = await this.businessesService.findOne(id);
     if (!business) {
-      throw new NotFoundException({ message: 'Business not found', errors: { id: ['Business does not exist'] } });
+      throw new NotFoundException({
+        message: 'Business not found',
+        errors: { id: ['Business does not exist'] },
+      });
     }
     await this.businessesService.remove(id);
     res.locals.message = 'Business deleted successfully';
     return res.json({ data: null });
   }
-
-} 
+}

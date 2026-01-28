@@ -12,4 +12,3 @@ export class CollaborationRequestDto {
   @IsNotEmpty()
   message: string;
 }
-

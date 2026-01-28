@@ -3,4 +3,4 @@ export class AuthResponseDto<T = any> {
   data?: T;
   message?: string;
   errors?: any;
-} 
+}

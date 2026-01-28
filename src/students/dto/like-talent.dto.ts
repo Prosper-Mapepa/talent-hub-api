@@ -7,4 +7,3 @@ export class LikeTalentDto {
   @IsBoolean()
   isLiked: boolean;
 }
-

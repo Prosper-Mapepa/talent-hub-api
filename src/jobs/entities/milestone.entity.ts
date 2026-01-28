@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { Job } from './job.entity';
 
 export enum MilestoneStatus {
@@ -12,14 +19,18 @@ export class Milestone {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Job, job => job.milestones, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Job, (job) => job.milestones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'job_id' })
   job: Job;
 
   @Column()
   title: string;
 
-  @Column({ type: 'enum', enum: MilestoneStatus, default: MilestoneStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: MilestoneStatus,
+    default: MilestoneStatus.PENDING,
+  })
   status: MilestoneStatus;
 
   @Column({ name: 'due_date', type: 'date' })
@@ -30,4 +41,4 @@ export class Milestone {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-} 
+}

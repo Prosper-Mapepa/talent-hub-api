@@ -13,4 +13,4 @@ export class CreateTalentDto {
 
   @IsString()
   description?: string;
-} 
+}

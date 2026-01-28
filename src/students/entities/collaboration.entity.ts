@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Student } from './student.entity';
 import { StudentTalent } from './talent.entity';
 
@@ -6,7 +14,7 @@ export enum CollaborationStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
   REJECTED = 'rejected',
-  CANCELLED = 'cancelled'
+  CANCELLED = 'cancelled',
 }
 
 @Entity('collaborations')
@@ -26,7 +34,11 @@ export class Collaboration {
   @Column({ type: 'text' })
   message: string; // Collaboration request message
 
-  @Column({ type: 'enum', enum: CollaborationStatus, default: CollaborationStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: CollaborationStatus,
+    default: CollaborationStatus.PENDING,
+  })
   status: CollaborationStatus;
 
   @Column({ nullable: true })
@@ -38,15 +50,15 @@ export class Collaboration {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Student, student => student.id)
+  @ManyToOne(() => Student, (student) => student.id)
   @JoinColumn({ name: 'requesterId' })
   requester: Student;
 
-  @ManyToOne(() => Student, student => student.id)
+  @ManyToOne(() => Student, (student) => student.id)
   @JoinColumn({ name: 'recipientId' })
   recipient: Student;
 
-  @ManyToOne(() => StudentTalent, talent => talent.id)
+  @ManyToOne(() => StudentTalent, (talent) => talent.id)
   @JoinColumn({ name: 'talentId' })
   talent: StudentTalent;
 }

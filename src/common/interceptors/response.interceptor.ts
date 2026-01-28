@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -8,13 +13,14 @@ export class ResponseInterceptor implements NestInterceptor {
     const ctx = context.switchToHttp();
     const response = ctx.getResponse();
     return next.handle().pipe(
-      map(data => {
+      map((data) => {
         // Allow controller/service to set a custom message on the response object
-        const message = response.locals && response.locals.message
-          ? response.locals.message
-          : 'Request successful';
+        const message =
+          response.locals && response.locals.message
+            ? response.locals.message
+            : 'Request successful';
         return { success: true, data, message };
       }),
     );
   }
-} 
+}

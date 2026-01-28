@@ -12,4 +12,4 @@ export class CreateAchievementDto {
   @IsOptional()
   @IsString({ each: true })
   files?: string[];
-} 
+}

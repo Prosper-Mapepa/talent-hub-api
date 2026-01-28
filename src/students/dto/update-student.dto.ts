@@ -25,4 +25,4 @@ export class UpdateStudentDto {
 
   @IsOptional()
   profileViews?: number;
-} 
+}

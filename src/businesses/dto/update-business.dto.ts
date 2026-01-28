@@ -25,4 +25,4 @@ export class UpdateBusinessDto {
   @IsOptional()
   @IsString()
   website?: string;
-} 
+}

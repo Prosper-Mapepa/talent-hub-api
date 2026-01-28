@@ -4,4 +4,4 @@ export const GlobalValidationPipe = new ValidationPipe({
   whitelist: true,
   forbidNonWhitelisted: true,
   transform: true,
-}); 
+});

@@ -156,6 +156,19 @@ export class ConversationsService {
       }
     }
 
+    // Check if any participants have blocked each other
+    if (validParticipantIds.length === 2) {
+      const [userId1, userId2] = validParticipantIds;
+      const isBlocked1 = await this.moderationService.isBlocked(userId1, userId2);
+      const isBlocked2 = await this.moderationService.isBlocked(userId2, userId1);
+      
+      if (isBlocked1 || isBlocked2) {
+        throw new ForbiddenException(
+          'You cannot create a conversation with this user. One of you has blocked the other.',
+        );
+      }
+    }
+
     // No existing conversation found, create a new one
     const conversation = this.conversationRepository.create();
     const saved = await this.conversationRepository.save(conversation);

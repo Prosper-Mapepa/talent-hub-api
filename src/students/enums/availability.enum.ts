@@ -4,4 +4,4 @@ export enum Availability {
   INTERNSHIP = 'INTERNSHIP',
   CONTRACT = 'CONTRACT',
   FREELANCE = 'FREELANCE',
-} 
+}

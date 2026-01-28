@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, Unique, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  CreateDateColumn,
+  Unique,
+  JoinColumn,
+} from 'typeorm';
 import { User } from './user.entity';
 
 @Entity('follows')
@@ -24,4 +32,3 @@ export class Follow {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }
-

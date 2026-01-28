@@ -11,4 +11,4 @@ import { JobsModule } from '../jobs/jobs.module';
   providers: [BusinessesService],
   exports: [BusinessesService],
 })
-export class BusinessesModule {} 
+export class BusinessesModule {}

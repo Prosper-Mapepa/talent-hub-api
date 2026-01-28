@@ -5,4 +5,4 @@ export enum BusinessType {
   FINANCE = 'FINANCE',
   EDUCATION = 'EDUCATION',
   RETAIL = 'RETAIL',
-} 
+}

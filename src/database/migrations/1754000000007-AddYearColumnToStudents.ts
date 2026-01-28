@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddYearColumnToStudents1754000000007 implements MigrationInterface {
+export class AddYearColumnToStudents1754000000007
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add year column to students table if it doesn't exist
     await queryRunner.query(`
@@ -22,4 +24,3 @@ export class AddYearColumnToStudents1754000000007 implements MigrationInterface 
     `);
   }
 }
-

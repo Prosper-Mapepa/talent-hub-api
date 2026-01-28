@@ -20,4 +20,4 @@ export class AddStudentTalents1700000000010 implements MigrationInterface {
       DROP TABLE IF EXISTS student_talents;
     `);
   }
-} 
+}

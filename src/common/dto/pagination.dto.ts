@@ -8,7 +8,7 @@ export class PaginationDto {
     example: 1,
     minimum: 1,
     default: 1,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -22,7 +22,7 @@ export class PaginationDto {
     minimum: 1,
     maximum: 100,
     default: 10,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -34,7 +34,7 @@ export class PaginationDto {
   @ApiProperty({
     description: 'Search query for filtering results',
     example: 'developer',
-    required: false
+    required: false,
   })
   @IsOptional()
   search?: string;
@@ -42,7 +42,7 @@ export class PaginationDto {
   @ApiProperty({
     description: 'Sort field',
     example: 'createdAt',
-    required: false
+    required: false,
   })
   @IsOptional()
   sortBy?: string;
@@ -52,8 +52,8 @@ export class PaginationDto {
     example: 'desc',
     enum: ['asc', 'desc'],
     default: 'desc',
-    required: false
+    required: false,
   })
   @IsOptional()
   sortOrder?: 'asc' | 'desc' = 'desc';
-} 
+}

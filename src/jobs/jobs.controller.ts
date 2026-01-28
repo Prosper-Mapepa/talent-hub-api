@@ -1,19 +1,33 @@
-import { Controller, Get, Post, Body, Param, Patch, Delete, UsePipes, ValidationPipe, Res, NotFoundException, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Patch,
+  Delete,
+  UsePipes,
+  ValidationPipe,
+  Res,
+  NotFoundException,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { Public } from '../auth/decorators/public.decorator';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiBody, 
-  ApiParam, 
-  ApiBadRequestResponse, 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiParam,
+  ApiBadRequestResponse,
   ApiNotFoundResponse,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiNoContentResponse,
   ApiBearerAuth,
   ApiUnauthorizedResponse,
-  ApiForbiddenResponse
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { JobsService } from './jobs.service';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -33,18 +47,18 @@ import { UserRole } from '../users/enums/user-role.enum';
   schema: {
     example: {
       success: false,
-      message: 'Unauthorized - Authentication required'
-    }
-  }
+      message: 'Unauthorized - Authentication required',
+    },
+  },
 })
 @ApiForbiddenResponse({
   description: 'Insufficient permissions',
   schema: {
     example: {
       success: false,
-      message: 'Forbidden - Insufficient permissions'
-    }
-  }
+      message: 'Forbidden - Insufficient permissions',
+    },
+  },
 })
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
@@ -52,9 +66,9 @@ export class JobsController {
   @Post()
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Create new job posting',
-    description: 'Create a new job posting for businesses to hire students'
+    description: 'Create a new job posting for businesses to hire students',
   })
   @ApiBody({
     type: CreateJobDto,
@@ -64,11 +78,12 @@ export class JobsController {
         summary: 'Software Developer',
         value: {
           title: 'Junior Full Stack Developer',
-          description: 'We are looking for a passionate junior developer to join our team',
+          description:
+            'We are looking for a passionate junior developer to join our team',
           type: 'FULL_TIME',
           experienceLevel: 'ENTRY_LEVEL',
-          businessId: 'business-uuid'
-        }
+          businessId: 'business-uuid',
+        },
       },
       intern: {
         summary: 'Internship',
@@ -77,30 +92,32 @@ export class JobsController {
           description: 'Summer internship opportunity in digital marketing',
           type: 'INTERNSHIP',
           experienceLevel: 'ENTRY_LEVEL',
-          businessId: 'business-uuid'
-        }
+          businessId: 'business-uuid',
+        },
       },
       senior: {
         summary: 'Senior Position',
         value: {
           title: 'Senior Data Scientist',
-          description: 'Lead data science initiatives and mentor junior team members',
+          description:
+            'Lead data science initiatives and mentor junior team members',
           type: 'FULL_TIME',
           experienceLevel: 'SENIOR',
-          businessId: 'business-uuid'
-        }
+          businessId: 'business-uuid',
+        },
       },
       partTime: {
         summary: 'Part-time Position',
         value: {
           title: 'Content Writer',
-          description: 'Part-time content writing for our blog and social media',
+          description:
+            'Part-time content writing for our blog and social media',
           type: 'PART_TIME',
           experienceLevel: 'INTERMEDIATE',
-          businessId: 'business-uuid'
-        }
-      }
-    }
+          businessId: 'business-uuid',
+        },
+      },
+    },
   })
   @ApiCreatedResponse({
     description: 'Job created successfully',
@@ -108,17 +125,18 @@ export class JobsController {
       example: {
         id: 'job-uuid',
         title: 'Junior Full Stack Developer',
-        description: 'We are looking for a passionate junior developer to join our team',
+        description:
+          'We are looking for a passionate junior developer to join our team',
         type: 'FULL_TIME',
         experienceLevel: 'ENTRY_LEVEL',
         business: {
           id: 'business-uuid',
           businessName: 'TechCorp Solutions',
-          businessType: 'TECHNOLOGY'
+          businessType: 'TECHNOLOGY',
         },
-        applications: []
-      }
-    }
+        applications: [],
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Validation error or invalid data',
@@ -131,10 +149,10 @@ export class JobsController {
           description: ['Job description is required'],
           type: ['Job type must be a valid enum value'],
           experienceLevel: ['Experience level must be a valid enum value'],
-          businessId: ['Business ID is required']
-        }
-      }
-    }
+          businessId: ['Business ID is required'],
+        },
+      },
+    },
   })
   async create(@Body() createJobDto: CreateJobDto, @Res() res: Response) {
     const result = await this.jobsService.create(createJobDto);
@@ -144,9 +162,9 @@ export class JobsController {
 
   @Get()
   @Public()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Get all job postings',
-    description: 'Retrieve a list of all available job postings'
+    description: 'Retrieve a list of all available job postings',
   })
   @ApiOkResponse({
     description: 'List of jobs retrieved successfully',
@@ -155,13 +173,14 @@ export class JobsController {
         {
           id: 'job-uuid-1',
           title: 'Junior Full Stack Developer',
-          description: 'We are looking for a passionate junior developer to join our team',
+          description:
+            'We are looking for a passionate junior developer to join our team',
           type: 'FULL_TIME',
           experienceLevel: 'ENTRY_LEVEL',
           business: {
             id: 'business-uuid-1',
             businessName: 'TechCorp Solutions',
-            businessType: 'TECHNOLOGY'
+            businessType: 'TECHNOLOGY',
           },
           applications: [
             {
@@ -170,10 +189,10 @@ export class JobsController {
               student: {
                 id: 'student-uuid-1',
                 firstName: 'John',
-                lastName: 'Doe'
-              }
-            }
-          ]
+                lastName: 'Doe',
+              },
+            },
+          ],
         },
         {
           id: 'job-uuid-2',
@@ -184,12 +203,12 @@ export class JobsController {
           business: {
             id: 'business-uuid-2',
             businessName: 'Global Consulting Group',
-            businessType: 'CONSULTING'
+            businessType: 'CONSULTING',
           },
-          applications: []
-        }
-      ]
-    }
+          applications: [],
+        },
+      ],
+    },
   })
   async findAll(@Query('businessId') businessId: string, @Res() res: Response) {
     let result;
@@ -203,15 +222,15 @@ export class JobsController {
   }
 
   @Get(':id')
-  @Roles(UserRole.ADMIN, UserRole.STUDENT, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @Roles(UserRole.ADMIN, UserRole.STUDENT, UserRole.FACULTY, UserRole.BUSINESS)
+  @ApiOperation({
     summary: 'Get job by ID',
-    description: 'Retrieve a specific job posting by ID'
+    description: 'Retrieve a specific job posting by ID',
   })
   @ApiParam({
     name: 'id',
     description: 'Job unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiOkResponse({
     description: 'Job retrieved successfully',
@@ -219,14 +238,15 @@ export class JobsController {
       example: {
         id: 'job-uuid',
         title: 'Junior Full Stack Developer',
-        description: 'We are looking for a passionate junior developer to join our team',
+        description:
+          'We are looking for a passionate junior developer to join our team',
         type: 'FULL_TIME',
         experienceLevel: 'ENTRY_LEVEL',
         business: {
           id: 'business-uuid',
           businessName: 'TechCorp Solutions',
           businessType: 'TECHNOLOGY',
-          location: 'San Francisco, CA'
+          location: 'San Francisco, CA',
         },
         applications: [
           {
@@ -238,8 +258,8 @@ export class JobsController {
               firstName: 'John',
               lastName: 'Doe',
               major: 'COMPUTER_SCIENCE',
-              year: 'SENIOR'
-            }
+              year: 'SENIOR',
+            },
           },
           {
             id: 'app-uuid-2',
@@ -250,26 +270,29 @@ export class JobsController {
               firstName: 'Jane',
               lastName: 'Smith',
               major: 'SOFTWARE_ENGINEERING',
-              year: 'JUNIOR'
-            }
-          }
-        ]
-      }
-    }
+              year: 'JUNIOR',
+            },
+          },
+        ],
+      },
+    },
   })
   @ApiNotFoundResponse({
     description: 'Job not found',
     schema: {
       example: {
         success: false,
-        message: 'Job not found'
-      }
-    }
+        message: 'Job not found',
+      },
+    },
   })
   async findOne(@Param('id') id: string, @Res() res: Response) {
     const result = await this.jobsService.findOne(id);
     if (!result) {
-      throw new NotFoundException({ message: 'Job not found', errors: { id: ['Job does not exist'] } });
+      throw new NotFoundException({
+        message: 'Job not found',
+        errors: { id: ['Job does not exist'] },
+      });
     }
     res.locals.message = 'Job retrieved successfully';
     return res.json({ data: result });
@@ -279,14 +302,14 @@ export class JobsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update job posting',
-    description: 'Update job posting information'
+    description: 'Update job posting information',
   })
   @ApiParam({
     name: 'id',
     description: 'Job unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiBody({
     type: UpdateJobDto,
@@ -295,28 +318,28 @@ export class JobsController {
       updateTitle: {
         summary: 'Update Job Title',
         value: {
-          title: 'Senior Full Stack Developer'
-        }
+          title: 'Senior Full Stack Developer',
+        },
       },
       updateDescription: {
         summary: 'Update Description',
         value: {
-          description: 'Updated job description with new requirements'
-        }
+          description: 'Updated job description with new requirements',
+        },
       },
       updateType: {
         summary: 'Update Job Type',
         value: {
-          type: 'PART_TIME'
-        }
+          type: 'PART_TIME',
+        },
       },
       updateExperience: {
         summary: 'Update Experience Level',
         value: {
-          experienceLevel: 'INTERMEDIATE'
-        }
-      }
-    }
+          experienceLevel: 'INTERMEDIATE',
+        },
+      },
+    },
   })
   @ApiOkResponse({
     description: 'Job updated successfully',
@@ -324,16 +347,17 @@ export class JobsController {
       example: {
         id: 'job-uuid',
         title: 'Senior Full Stack Developer',
-        description: 'We are looking for a passionate junior developer to join our team',
+        description:
+          'We are looking for a passionate junior developer to join our team',
         type: 'FULL_TIME',
         experienceLevel: 'ENTRY_LEVEL',
         business: {
           id: 'business-uuid',
           businessName: 'TechCorp Solutions',
-          businessType: 'TECHNOLOGY'
-        }
-      }
-    }
+          businessType: 'TECHNOLOGY',
+        },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Validation error or invalid data',
@@ -344,24 +368,31 @@ export class JobsController {
         errors: {
           title: ['Job title is required'],
           type: ['Job type must be a valid enum value'],
-          experienceLevel: ['Experience level must be a valid enum value']
-        }
-      }
-    }
+          experienceLevel: ['Experience level must be a valid enum value'],
+        },
+      },
+    },
   })
   @ApiNotFoundResponse({
     description: 'Job not found',
     schema: {
       example: {
         success: false,
-        message: 'Job not found'
-      }
-    }
+        message: 'Job not found',
+      },
+    },
   })
-  async update(@Param('id') id: string, @Body() updateJobDto: UpdateJobDto, @Res() res: Response) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateJobDto: UpdateJobDto,
+    @Res() res: Response,
+  ) {
     const result = await this.jobsService.update(id, updateJobDto);
     if (!result) {
-      throw new NotFoundException({ message: 'Job not found', errors: { id: ['Job does not exist'] } });
+      throw new NotFoundException({
+        message: 'Job not found',
+        errors: { id: ['Job does not exist'] },
+      });
     }
     res.locals.message = 'Job updated successfully';
     return res.json({ data: result });
@@ -369,31 +400,34 @@ export class JobsController {
 
   @Delete(':id')
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Delete job posting',
-    description: 'Permanently delete a job posting'
+    description: 'Permanently delete a job posting',
   })
   @ApiParam({
     name: 'id',
     description: 'Job unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiNoContentResponse({
-    description: 'Job deleted successfully'
+    description: 'Job deleted successfully',
   })
   @ApiNotFoundResponse({
     description: 'Job not found',
     schema: {
       example: {
         success: false,
-        message: 'Job not found'
-      }
-    }
+        message: 'Job not found',
+      },
+    },
   })
   async remove(@Param('id') id: string, @Res() res: Response) {
     const job = await this.jobsService.findOne(id);
     if (!job) {
-      throw new NotFoundException({ message: 'Job not found', errors: { id: ['Job does not exist'] } });
+      throw new NotFoundException({
+        message: 'Job not found',
+        errors: { id: ['Job does not exist'] },
+      });
     }
     await this.jobsService.remove(id);
     res.locals.message = 'Job deleted successfully';
@@ -402,10 +436,10 @@ export class JobsController {
 
   @Post('applications')
   @UsePipes(new ValidationPipe({ whitelist: true }))
-  @Roles(UserRole.ADMIN, UserRole.STUDENT)
-  @ApiOperation({ 
+  @Roles(UserRole.ADMIN, UserRole.STUDENT, UserRole.FACULTY)
+  @ApiOperation({
     summary: 'Apply for job',
-    description: 'Submit a job application from a student to a job posting'
+    description: 'Submit a job application from a student to a job posting',
   })
   @ApiBody({
     type: CreateApplicationDto,
@@ -415,10 +449,10 @@ export class JobsController {
         summary: 'Standard Application',
         value: {
           studentId: 'student-uuid',
-          jobId: 'job-uuid'
-        }
-      }
-    }
+          jobId: 'job-uuid',
+        },
+      },
+    },
   })
   @ApiCreatedResponse({
     description: 'Application submitted successfully',
@@ -432,18 +466,18 @@ export class JobsController {
           firstName: 'John',
           lastName: 'Doe',
           major: 'COMPUTER_SCIENCE',
-          year: 'SENIOR'
+          year: 'SENIOR',
         },
         job: {
           id: 'job-uuid',
           title: 'Junior Full Stack Developer',
           business: {
             id: 'business-uuid',
-            businessName: 'TechCorp Solutions'
-          }
-        }
-      }
-    }
+            businessName: 'TechCorp Solutions',
+          },
+        },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Validation error or invalid data',
@@ -453,21 +487,24 @@ export class JobsController {
         message: 'Validation failed',
         errors: {
           studentId: ['Student ID is required'],
-          jobId: ['Job ID is required']
-        }
-      }
-    }
+          jobId: ['Job ID is required'],
+        },
+      },
+    },
   })
   @ApiNotFoundResponse({
     description: 'Student or job not found',
     schema: {
       example: {
         success: false,
-        message: 'Student or job not found'
-      }
-    }
+        message: 'Student or job not found',
+      },
+    },
   })
-  async createApplication(@Body() dto: CreateApplicationDto, @Res() res: Response) {
+  async createApplication(
+    @Body() dto: CreateApplicationDto,
+    @Res() res: Response,
+  ) {
     const result = await this.jobsService.createApplication(dto);
     res.locals.message = 'Application submitted successfully';
     return res.json({ data: result });
@@ -477,14 +514,15 @@ export class JobsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Roles(UserRole.ADMIN, UserRole.BUSINESS)
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Update application status',
-    description: 'Update the status of a job application (accept, reject, etc.)'
+    description:
+      'Update the status of a job application (accept, reject, etc.)',
   })
   @ApiParam({
     name: 'id',
     description: 'Application unique identifier',
-    example: 'uuid'
+    example: 'uuid',
   })
   @ApiBody({
     schema: {
@@ -493,11 +531,11 @@ export class JobsController {
         status: {
           type: 'string',
           enum: ['PENDING', 'REVIEWED', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'],
-          example: 'ACCEPTED'
-        }
+          example: 'ACCEPTED',
+        },
       },
-      required: ['status']
-    }
+      required: ['status'],
+    },
   })
   @ApiOkResponse({
     description: 'Application status updated successfully',
@@ -508,31 +546,31 @@ export class JobsController {
         student: {
           id: 'student-uuid',
           firstName: 'John',
-          lastName: 'Doe'
+          lastName: 'Doe',
         },
         job: {
           id: 'job-uuid',
-          title: 'Junior Full Stack Developer'
-        }
-      }
-    }
+          title: 'Junior Full Stack Developer',
+        },
+      },
+    },
   })
   @ApiNotFoundResponse({
     description: 'Application not found',
     schema: {
       example: {
         success: false,
-        message: 'Application not found'
-      }
-    }
+        message: 'Application not found',
+      },
+    },
   })
   async updateApplicationStatus(
     @Param('id') id: string,
     @Body('status') status: string,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
     const result = await this.jobsService.updateApplicationStatus(id, status);
     res.locals.message = 'Application status updated successfully';
     return res.json({ data: result });
   }
-} 
+}

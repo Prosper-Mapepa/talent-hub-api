@@ -1,9 +1,9 @@
 import { Controller, Get, Res } from '@nestjs/common';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiOkResponse
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Response } from 'express';
@@ -22,9 +22,9 @@ export class AppController {
 
   @Get()
   @Public()
-  @ApiOperation({ 
+  @ApiOperation({
     summary: 'Health check',
-    description: 'Check if the API is running and healthy'
+    description: 'Check if the API is running and healthy',
   })
   @ApiOkResponse({
     description: 'API is healthy',
@@ -32,9 +32,9 @@ export class AppController {
       example: {
         message: 'Student Talent Hub API is running!',
         timestamp: '2024-01-15T10:30:00.000Z',
-        version: '1.0.0'
-      }
-    }
+        version: '1.0.0',
+      },
+    },
   })
   getHello(@Res() res: Response): void {
     const result = this.appService.getHello();

@@ -23,4 +23,4 @@ export class SeedUsers1680000000001 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DELETE FROM users WHERE email = 'admin@cmu.edu';`);
   }
-} 
+}

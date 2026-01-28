@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToOne,
+} from 'typeorm';
 import { UserRole } from '../enums/user-role.enum';
 import { UserStatus } from '../enums/user-status.enum';
 import { Business } from '../../businesses/entities/business.entity';
@@ -15,7 +22,6 @@ export class User {
 
   @Column()
   password: string;
-  
 
   @Column({ type: 'enum', enum: UserRole })
   role: UserRole;
@@ -29,6 +35,12 @@ export class User {
   @Column({ name: 'agreed_to_terms', default: true })
   agreedToTerms: boolean;
 
+  @Column({ name: 'reset_password_token', nullable: true })
+  resetPasswordToken: string | null;
+
+  @Column({ name: 'reset_password_expires', type: 'timestamp', nullable: true })
+  resetPasswordExpires: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -36,9 +48,9 @@ export class User {
   updatedAt: Date;
 
   // Relationships
-  @OneToOne(() => Student, student => student.user)
+  @OneToOne(() => Student, (student) => student.user)
   student: Student;
 
-  @OneToOne(() => Business, business => business.user)
+  @OneToOne(() => Business, (business) => business.user)
   business: Business;
-} 
+}

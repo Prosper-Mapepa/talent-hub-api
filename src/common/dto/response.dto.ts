@@ -3,32 +3,32 @@ import { ApiProperty } from '@nestjs/swagger';
 export class ResponseDto<T = any> {
   @ApiProperty({
     description: 'Indicates if the request was successful',
-    example: true
+    example: true,
   })
   success: boolean;
 
   @ApiProperty({
     description: 'Response data',
-    required: false
+    required: false,
   })
   data?: T;
 
   @ApiProperty({
     description: 'Response message',
     example: 'Operation completed successfully',
-    required: false
+    required: false,
   })
   message?: string;
 
   @ApiProperty({
     description: 'Error details if the request failed',
-    required: false
+    required: false,
   })
   errors?: any;
 
   @ApiProperty({
     description: 'Timestamp of the response',
-    example: '2024-01-15T10:30:00.000Z'
+    example: '2024-01-15T10:30:00.000Z',
   })
   timestamp: string;
 }
@@ -36,37 +36,37 @@ export class ResponseDto<T = any> {
 export class PaginatedResponseDto<T = any> extends ResponseDto<T[]> {
   @ApiProperty({
     description: 'Current page number',
-    example: 1
+    example: 1,
   })
   page: number;
 
   @ApiProperty({
     description: 'Number of items per page',
-    example: 10
+    example: 10,
   })
   limit: number;
 
   @ApiProperty({
     description: 'Total number of items',
-    example: 100
+    example: 100,
   })
   total: number;
 
   @ApiProperty({
     description: 'Total number of pages',
-    example: 10
+    example: 10,
   })
   totalPages: number;
 
   @ApiProperty({
     description: 'Whether there is a next page',
-    example: true
+    example: true,
   })
   hasNext: boolean;
 
   @ApiProperty({
     description: 'Whether there is a previous page',
-    example: false
+    example: false,
   })
   hasPrev: boolean;
-} 
+}

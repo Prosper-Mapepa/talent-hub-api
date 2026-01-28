@@ -31,4 +31,4 @@ export const multerConfig = {
     }
     cb(null, true);
   },
-}; 
+};

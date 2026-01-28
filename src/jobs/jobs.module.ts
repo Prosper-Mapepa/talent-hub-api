@@ -10,9 +10,18 @@ import { Milestone } from './entities/milestone.entity';
 import { Deliverable } from './entities/deliverable.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Job, Application, Business, Student, Milestone, Deliverable])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Job,
+      Application,
+      Business,
+      Student,
+      Milestone,
+      Deliverable,
+    ]),
+  ],
   controllers: [JobsController],
   providers: [JobsService],
   exports: [JobsService],
 })
-export class JobsModule {} 
+export class JobsModule {}

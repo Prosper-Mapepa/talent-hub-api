@@ -19,4 +19,3 @@ export class AddJobDetailsColumns1756000000000 implements MigrationInterface {
     `);
   }
 }
-

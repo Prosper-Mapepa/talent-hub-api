@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
 @Entity('conversations')
@@ -7,16 +14,16 @@ export class Conversation {
   id: string;
 
   @ManyToMany(() => User)
-  @JoinTable({ 
+  @JoinTable({
     name: 'conversation_participants',
     joinColumn: {
       name: 'conversation_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
       name: 'user_id',
-      referencedColumnName: 'id'
-    }
+      referencedColumnName: 'id',
+    },
   })
   participants: User[];
 
@@ -25,4 +32,4 @@ export class Conversation {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

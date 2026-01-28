@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsEmail, IsEnum, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+} from 'class-validator';
 import { BusinessType } from '../enums/business-type.enum';
 
 export class CreateBusinessDto {
@@ -23,4 +29,4 @@ export class CreateBusinessDto {
   @IsString()
   @IsOptional()
   website?: string;
-} 
+}

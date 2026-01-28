@@ -7,4 +7,4 @@ export const appConfig = {
   frontendUrl: process.env.FRONTEND_URL,
   corsOrigin: process.env.CORS_ORIGIN,
   logLevel: process.env.LOG_LEVEL || 'info',
-}; 
+};

@@ -11,4 +11,4 @@ import { Follow } from './entities/follow.entity';
   providers: [UsersService],
   exports: [UsersService],
 })
-export class UsersModule {} 
+export class UsersModule {}

@@ -5,4 +5,4 @@ export enum AcademicYear {
   SENIOR = 'SENIOR',
   GRADUATE = 'GRADUATE',
   ALUMNI = 'ALUMNI',
-} 
+}

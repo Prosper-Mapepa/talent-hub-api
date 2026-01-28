@@ -10,4 +10,4 @@ export class UserResponseDto {
   agreedToTerms: boolean;
   createdAt: Date;
   updatedAt: Date;
-} 
+}

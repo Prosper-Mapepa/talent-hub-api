@@ -12,4 +12,4 @@ export class CreateProjectDto {
   @IsOptional()
   @IsString({ each: true })
   images?: string[];
-} 
+}

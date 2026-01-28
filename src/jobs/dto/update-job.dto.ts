@@ -41,4 +41,4 @@ export class UpdateJobDto {
   @IsArray()
   @IsString({ each: true })
   benefits?: string[];
-} 
+}

@@ -23,4 +23,4 @@ export class CreateStudentDto {
 
   @IsOptional()
   profileViews?: number;
-} 
+}

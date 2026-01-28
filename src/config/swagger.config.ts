@@ -2,7 +2,8 @@ import { DocumentBuilder } from '@nestjs/swagger';
 
 export const swaggerConfig = new DocumentBuilder()
   .setTitle('Student Talent Hub API')
-  .setDescription(`
+  .setDescription(
+    `
     # Student Talent Hub API Documentation
     
     A comprehensive platform connecting students with businesses for internships, jobs, and career opportunities.
@@ -31,7 +32,8 @@ export const swaggerConfig = new DocumentBuilder()
     
     ## Data Validation
     All request bodies are validated using class-validator decorators. Invalid requests will return 400 Bad Request with validation details.
-  `)
+  `,
+  )
   .setVersion('1.0.0')
   .addTag('Health Check', 'API health and status endpoints')
   .addTag('Authentication', 'User registration and login endpoints')
@@ -57,10 +59,7 @@ export const swaggerConfig = new DocumentBuilder()
   .setContact(
     'Student Talent Hub Team',
     'https://studenttalenhub.com',
-    'support@studenttalenhub.com'
+    'support@studenttalenhub.com',
   )
-  .setLicense(
-    'MIT License',
-    'https://opensource.org/licenses/MIT'
-  )
-  .build(); 
+  .setLicense('MIT License', 'https://opensource.org/licenses/MIT')
+  .build();

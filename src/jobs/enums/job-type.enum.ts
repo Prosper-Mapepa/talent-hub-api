@@ -4,4 +4,4 @@ export enum JobType {
   INTERNSHIP = 'INTERNSHIP',
   CONTRACT = 'CONTRACT',
   FREELANCE = 'FREELANCE',
-} 
+}

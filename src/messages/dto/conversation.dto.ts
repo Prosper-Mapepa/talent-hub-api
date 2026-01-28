@@ -8,4 +8,4 @@ export class ConversationDto {
   @IsString()
   @IsNotEmpty()
   userB: string;
-} 
+}

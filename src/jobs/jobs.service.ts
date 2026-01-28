@@ -23,9 +23,14 @@ export class JobsService {
   ) {}
 
   async create(createJobDto: CreateJobDto): Promise<Job> {
-    const business = await this.businessRepository.findOne({ where: { id: createJobDto.businessId } });
+    const business = await this.businessRepository.findOne({
+      where: { id: createJobDto.businessId },
+    });
     if (!business) {
-      throw new NotFoundException({ message: 'Business not found', errors: { businessId: ['Business does not exist'] } });
+      throw new NotFoundException({
+        message: 'Business not found',
+        errors: { businessId: ['Business does not exist'] },
+      });
     }
     const job = this.jobRepository.create({ ...createJobDto, business });
     return this.jobRepository.save(job);
@@ -38,7 +43,7 @@ export class JobsService {
         'applications',
         'applications.student',
         'applications.student.achievements',
-        'applications.student.projects'
+        'applications.student.projects',
       ],
       select: {
         id: true,
@@ -66,11 +71,23 @@ export class JobsService {
         },
       },
     });
-    return jobs.map(job => ({ ...job, applications: job.applications ?? [] }));
+    return jobs.map((job) => ({
+      ...job,
+      applications: job.applications ?? [],
+    }));
   }
 
   async findOne(id: string): Promise<Job | null> {
-    return this.jobRepository.findOne({ where: { id }, relations: ['business', 'applications', 'applications.student', 'milestones', 'deliverables'] });
+    return this.jobRepository.findOne({
+      where: { id },
+      relations: [
+        'business',
+        'applications',
+        'applications.student',
+        'milestones',
+        'deliverables',
+      ],
+    });
   }
 
   async update(id: string, updateJobDto: UpdateJobDto): Promise<Job | null> {
@@ -83,17 +100,25 @@ export class JobsService {
   }
 
   async createApplication(dto: CreateApplicationDto): Promise<Application> {
-    const student = await this.studentRepository.findOne({ where: { id: dto.studentId } });
+    const student = await this.studentRepository.findOne({
+      where: { id: dto.studentId },
+    });
     const job = await this.jobRepository.findOne({ where: { id: dto.jobId } });
-    
+
     if (!student) {
-      throw new NotFoundException({ message: 'Student not found', errors: { studentId: ['Student does not exist'] } });
+      throw new NotFoundException({
+        message: 'Student not found',
+        errors: { studentId: ['Student does not exist'] },
+      });
     }
-    
+
     if (!job) {
-      throw new NotFoundException({ message: 'Job not found', errors: { jobId: ['Job does not exist'] } });
+      throw new NotFoundException({
+        message: 'Job not found',
+        errors: { jobId: ['Job does not exist'] },
+      });
     }
-    
+
     const application = this.applicationRepository.create({ student, job });
     return this.applicationRepository.save(application);
   }
@@ -106,23 +131,29 @@ export class JobsService {
         'applications',
         'applications.student',
         'applications.student.achievements',
-        'applications.student.projects'
-      ]
+        'applications.student.projects',
+      ],
     });
-    return jobs.map(job => ({ ...job, applications: job.applications ?? [] }));
+    return jobs.map((job) => ({
+      ...job,
+      applications: job.applications ?? [],
+    }));
   }
 
-  async updateApplicationStatus(applicationId: string, status: string): Promise<Application> {
+  async updateApplicationStatus(
+    applicationId: string,
+    status: string,
+  ): Promise<Application> {
     const application = await this.applicationRepository.findOne({
       where: { id: applicationId },
-      relations: ['student', 'job']
+      relations: ['student', 'job'],
     });
-    
+
     if (!application) {
       throw new NotFoundException('Application not found');
     }
-    
+
     application.status = status as any;
     return this.applicationRepository.save(application);
   }
-} 
+}

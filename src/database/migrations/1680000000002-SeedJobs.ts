@@ -6,7 +6,7 @@ export class SeedJobs1680000000002 implements MigrationInterface {
     const businessResult = await queryRunner.query(`
       SELECT id FROM businesses LIMIT 1;
     `);
-    
+
     let businessId;
     if (businessResult.length > 0) {
       businessId = businessResult[0].id;
@@ -92,4 +92,4 @@ export class SeedJobs1680000000002 implements MigrationInterface {
       );
     `);
   }
-} 
+}

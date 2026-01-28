@@ -14,4 +14,4 @@ export class UpdateTalentDto {
   @IsString()
   @IsOptional()
   description?: string;
-} 
+}

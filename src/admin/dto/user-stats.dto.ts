@@ -3,4 +3,4 @@ export class UserStatsDto {
   active: number;
   inactive: number;
   suspended: number;
-} 
+}

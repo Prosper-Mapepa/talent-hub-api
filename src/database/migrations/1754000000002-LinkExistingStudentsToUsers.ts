@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class LinkExistingStudentsToUsers1754000000002 implements MigrationInterface {
+export class LinkExistingStudentsToUsers1754000000002
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Link existing students to users based on email
     await queryRunner.query(`

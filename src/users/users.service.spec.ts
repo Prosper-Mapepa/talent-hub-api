@@ -32,7 +32,12 @@ describe('UsersService', () => {
   });
 
   it('should create a user', async () => {
-    const dto = { email: 'test@cmu.edu', password: 'Test1234!', role: 'student', agreedToTerms: true };
+    const dto = {
+      email: 'test@cmu.edu',
+      password: 'Test1234!',
+      role: 'student',
+      agreedToTerms: true,
+    };
     repo.create.mockReturnValue(dto);
     repo.save.mockResolvedValue({ id: '1', ...dto });
     const result = await service.create(dto as any);
@@ -40,4 +45,4 @@ describe('UsersService', () => {
     expect(repo.create).toHaveBeenCalledWith(dto);
     expect(repo.save).toHaveBeenCalledWith(dto);
   });
-}); 
+});

@@ -22,4 +22,3 @@ export class UpdateSkillDto {
   @IsEnum(Proficiency)
   proficiency?: Proficiency;
 }
-

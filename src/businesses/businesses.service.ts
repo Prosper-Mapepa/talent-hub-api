@@ -22,10 +22,16 @@ export class BusinessesService {
   }
 
   async findOne(id: string): Promise<Business | null> {
-    return this.businessRepository.findOne({ where: { id }, relations: ['user'] });
+    return this.businessRepository.findOne({
+      where: { id },
+      relations: ['user'],
+    });
   }
 
-  async update(id: string, updateBusinessDto: UpdateBusinessDto): Promise<Business | null> {
+  async update(
+    id: string,
+    updateBusinessDto: UpdateBusinessDto,
+  ): Promise<Business | null> {
     await this.businessRepository.update(id, updateBusinessDto);
     return this.findOne(id);
   }
@@ -35,6 +41,9 @@ export class BusinessesService {
   }
 
   async findByUserId(userId: string): Promise<Business | null> {
-    return this.businessRepository.findOne({ where: { user: { id: userId } }, relations: ['user'] });
+    return this.businessRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user'],
+    });
   }
-} 
+}

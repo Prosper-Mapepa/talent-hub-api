@@ -6,7 +6,7 @@ export class AppService {
     return {
       message: 'Student Talent Hub API is running!',
       timestamp: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
   }
 }

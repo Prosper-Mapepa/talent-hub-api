@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddDefaultProficiencyToSkills1754000000008 implements MigrationInterface {
+export class AddDefaultProficiencyToSkills1754000000008
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add default proficiency to existing skills that don't have it
     await queryRunner.query(`
@@ -15,4 +17,3 @@ export class AddDefaultProficiencyToSkills1754000000008 implements MigrationInte
     console.log('Migration AddDefaultProficiencyToSkills cannot be reversed');
   }
 }
-

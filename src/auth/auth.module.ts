@@ -43,6 +43,6 @@ import { LocalAuthGuard } from './guards/local-auth.guard';
     RolesGuard,
     LocalAuthGuard,
   ],
-  exports: [AuthService],
+  exports: [AuthService, EmailService],
 })
 export class AuthModule {}

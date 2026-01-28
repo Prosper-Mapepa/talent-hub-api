@@ -56,7 +56,7 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id, role: user.role };
     let student = null;
     let business = null;
-    if (user.role === UserRole.STUDENT) {
+    if (user.role === UserRole.STUDENT || user.role === UserRole.FACULTY) {
       student = await this.studentsService.findByUserId(user.id);
     }
     if (user.role === UserRole.BUSINESS) {
@@ -116,11 +116,17 @@ export class AuthService {
     
     // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
+    // Determine role: allow faculty to register via student flow
+    const userRole =
+      dto.role && dto.role.toLowerCase() === 'faculty'
+        ? UserRole.FACULTY
+        : UserRole.STUDENT;
+
     // Create user
     const user = await this.usersService.create({
       email: dto.email,
       password: hashedPassword,
-      role: UserRole.STUDENT,
+      role: userRole,
       agreedToTerms: dto.agreedToTerms,
     } as CreateUserDto);
     // Create student profile
@@ -130,6 +136,7 @@ export class AuthService {
       email: dto.email,
       major: dto.major,
       year: dto.year,
+      role: userRole,
       user: user,
     });
     

@@ -20,4 +20,4 @@ export class CreateSkillDto {
   @IsOptional()
   @IsEnum(Proficiency)
   proficiency?: Proficiency;
-} 
+}

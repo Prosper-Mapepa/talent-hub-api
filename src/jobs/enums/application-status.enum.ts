@@ -4,4 +4,4 @@ export enum ApplicationStatus {
   ACCEPTED = 'ACCEPTED',
   REJECTED = 'REJECTED',
   WITHDRAWN = 'WITHDRAWN',
-} 
+}

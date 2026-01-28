@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Student } from './student.entity';
 import { Proficiency } from '../enums/proficiency.enum';
 
@@ -22,11 +30,11 @@ export class Skill {
   @Column({
     type: 'enum',
     enum: Proficiency,
-    default: Proficiency.BEGINNER
+    default: Proficiency.BEGINNER,
   })
   proficiency: Proficiency;
 
-  @ManyToOne(() => Student, student => student.skills)
+  @ManyToOne(() => Student, (student) => student.skills)
   @JoinColumn({ name: 'student_id' })
   student: Student;
 
@@ -35,4 +43,4 @@ export class Skill {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-} 
+}

@@ -3,4 +3,4 @@ export enum Proficiency {
   INTERMEDIATE = 'INTERMEDIATE',
   ADVANCED = 'ADVANCED',
   EXPERT = 'EXPERT',
-} 
+}

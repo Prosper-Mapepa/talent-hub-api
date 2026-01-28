@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsEmail, MinLength, IsEnum, IsBoolean, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  MinLength,
+  IsEnum,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import { BusinessType } from '../../businesses/enums/business-type.enum';
 
 export class RegisterBusinessDto {
@@ -23,4 +31,4 @@ export class RegisterBusinessDto {
   @IsBoolean()
   @IsOptional()
   agreedToTerms: boolean = true;
-} 
+}

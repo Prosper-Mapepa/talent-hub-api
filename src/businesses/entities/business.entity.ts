@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { BusinessType } from '../enums/business-type.enum';
 
@@ -25,7 +31,7 @@ export class Business {
   @Column({ nullable: true })
   website?: string;
 
-  @OneToOne(() => User, user => user.business)
+  @OneToOne(() => User, (user) => user.business)
   @JoinColumn({ name: 'user_id' })
   user: User;
-} 
+}

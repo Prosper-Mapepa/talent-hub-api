@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Student } from './student.entity';
 
 @Entity('projects')
@@ -15,7 +21,7 @@ export class Project {
   @Column({ type: 'text', array: true, nullable: true })
   images: string[];
 
-  @ManyToOne(() => Student, student => student.projects)
+  @ManyToOne(() => Student, (student) => student.projects)
   @JoinColumn({ name: 'student_id' })
   student: Student;
-} 
+}

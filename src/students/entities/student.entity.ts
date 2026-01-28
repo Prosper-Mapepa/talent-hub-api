@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { StudentTalent } from './talent.entity';
 import { Project } from './project.entity';
 import { Achievement } from './achievement.entity';
@@ -26,10 +35,10 @@ export class Student {
   @Column({ name: 'major', nullable: true })
   major: string;
 
-  @Column({ 
-    name: 'year', 
+  @Column({
+    name: 'year',
     type: 'enum',
-    enum: AcademicYear
+    enum: AcademicYear,
   })
   year: AcademicYear;
 
@@ -48,13 +57,31 @@ export class Student {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.STUDENT })
   role: UserRole;
 
-  @Column({ name: 'liked_talents', type: 'text', array: true, nullable: true, default: [] })
+  @Column({
+    name: 'liked_talents',
+    type: 'text',
+    array: true,
+    nullable: true,
+    default: [],
+  })
   likedTalents: string[]; // Array of talent IDs that this student has liked
 
-  @Column({ name: 'saved_talents', type: 'text', array: true, nullable: true, default: [] })
+  @Column({
+    name: 'saved_talents',
+    type: 'text',
+    array: true,
+    nullable: true,
+    default: [],
+  })
   savedTalents: string[]; // Array of talent IDs that this student has saved
 
-  @Column({ name: 'collaborations', type: 'text', array: true, nullable: true, default: [] })
+  @Column({
+    name: 'collaborations',
+    type: 'text',
+    array: true,
+    nullable: true,
+    default: [],
+  })
   collaborations: string[]; // Array of collaboration request IDs
 
   @CreateDateColumn({ name: 'created_at' })
@@ -63,19 +90,19 @@ export class Student {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @ManyToOne(() => User, user => user.id)
+  @ManyToOne(() => User, (user) => user.id)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @OneToMany(() => StudentTalent, talent => talent.student)
+  @OneToMany(() => StudentTalent, (talent) => talent.student)
   talents: StudentTalent[];
 
-  @OneToMany(() => Project, project => project.student)
+  @OneToMany(() => Project, (project) => project.student)
   projects: Project[];
 
-  @OneToMany(() => Achievement, achievement => achievement.student)
+  @OneToMany(() => Achievement, (achievement) => achievement.student)
   achievements: Achievement[];
 
   @OneToMany('Skill', 'student')
   skills: any[];
-} 
+}
