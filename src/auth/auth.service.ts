@@ -130,7 +130,7 @@ export class AuthService {
       agreedToTerms: dto.agreedToTerms,
     } as CreateUserDto);
     // Create student profile
-    const student = await this.studentsService.create({
+    const studentPayload: any = {
       firstName: dto.firstName,
       lastName: dto.lastName,
       email: dto.email,
@@ -138,7 +138,11 @@ export class AuthService {
       year: dto.year,
       role: userRole,
       user: user,
-    });
+    };
+    if (dto.graduationYear != null && dto.graduationYear !== '') {
+      studentPayload.graduationYear = dto.graduationYear;
+    }
+    const student = await this.studentsService.create(studentPayload);
     
     // Note: EULA acceptance is tracked separately via moderation service
     // We'll accept it after user creation if needed via the moderation endpoint

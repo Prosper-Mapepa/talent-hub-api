@@ -8,7 +8,6 @@ import {
   IsBoolean,
   IsOptional,
 } from 'class-validator';
-import { Major } from '../../students/enums/major.enum';
 import { AcademicYear } from '../../students/enums/year.enum';
 
 export class RegisterStudentDto {
@@ -34,11 +33,16 @@ export class RegisterStudentDto {
   )
   password: string;
 
-  @IsEnum(Major)
-  major: Major;
+  @IsString()
+  @IsNotEmpty({ message: 'Major is required' })
+  major: string;
 
   @IsEnum(AcademicYear)
   year: AcademicYear;
+
+  @IsString()
+  @IsOptional()
+  graduationYear?: string;
 
   @IsBoolean()
   @IsOptional()
