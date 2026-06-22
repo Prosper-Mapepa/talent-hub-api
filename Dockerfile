@@ -16,12 +16,16 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3001
 
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nestjs
+
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
-RUN mkdir -p uploads
+RUN mkdir -p uploads && chown -R nestjs:nodejs /app
 
+USER nestjs
 EXPOSE 3001
 
 HEALTHCHECK --interval=10s --timeout=5s --retries=12 \
