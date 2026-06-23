@@ -28,30 +28,41 @@ async function bootstrap() {
   });
 
   app.use(helmet());
-  // Update the CORS configuration to include PATCH method
-  // Support multiple origins from environment variable or default to localhost
-  const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
-    : [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://35.32.91.174:3002',
-      ];
+
+  const defaultOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://35.32.91.174:3002',
+    'https://vertalent.netlify.app',
+  ];
+
+  const allowedOrigins = Array.from(
+    new Set([
+      ...defaultOrigins,
+      ...(process.env.CORS_ORIGINS?.split(',').map((origin) => origin.trim()) ??
+        []),
+    ]),
+  );
+
+  const isAllowedOrigin = (origin: string | undefined): boolean => {
+    if (!origin) return true;
+    if (allowedOrigins.includes(origin)) return true;
+    // Netlify production + preview deploys
+    if (/^https:\/\/[\w-]+--[\w-]+\.netlify\.app$/.test(origin)) return true;
+    if (/^https:\/\/[\w-]+\.netlify\.app$/.test(origin)) return true;
+    if (process.env.NODE_ENV !== 'production') return true;
+    return false;
+  };
 
   app.enableCors({
     origin: (
       origin: string | undefined,
       callback: (err: Error | null, allow?: boolean) => void,
     ) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (
-        allowedOrigins.indexOf(origin) !== -1 ||
-        process.env.NODE_ENV !== 'production'
-      ) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true,
@@ -65,13 +76,18 @@ async function bootstrap() {
     ],
   });
 
+  const resolveCorsOrigin = (req: Request): string => {
+    const requestOrigin = req.headers.origin;
+    if (requestOrigin && isAllowedOrigin(requestOrigin)) {
+      return requestOrigin;
+    }
+    return allowedOrigins[0] ?? 'http://localhost:3000';
+  };
+
   // Replace the existing static file serving with this updated version
   app.use('/uploads', (req: Request, res: Response, next: NextFunction) => {
-    // Set CORS headers for all uploads requests
-    res.header(
-      'Access-Control-Allow-Origin',
-      req.headers.origin || 'http://localhost:3000',
-    );
+    const corsOrigin = resolveCorsOrigin(req);
+    res.header('Access-Control-Allow-Origin', corsOrigin);
     res.header(
       'Access-Control-Allow-Methods',
       'GET, POST, PUT, PATCH, DELETE, OPTIONS',
@@ -136,6 +152,7 @@ async function bootstrap() {
 
   await app.listen(appConfig.port, '0.0.0.0');
   console.log(`Server running on http://0.0.0.0:${appConfig.port}`);
+  console.log(`CORS allowed origins: ${allowedOrigins.join(', ')}`);
   console.log(`Local access: http://localhost:${appConfig.port}`);
   console.log(
     `Network access: http://${process.env.LOCAL_IP || '0.0.0.0'}:${appConfig.port}`,
