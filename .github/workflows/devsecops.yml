@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Trivy filesystem scan
+      - name: Generate SARIF report
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
@@ -46,7 +46,7 @@ jobs:
           scanners: vuln
           severity: ${{ env.TRIVY_SEVERITY }}
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: '0'
           skip-dirs: ${{ env.TRIVY_SKIP_DIRS }}
           format: sarif
           output: trivy-fs.sarif
@@ -57,6 +57,18 @@ jobs:
         with:
           sarif_file: trivy-fs.sarif
           category: trivy-filesystem
+
+      - name: Fail on HIGH/CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: ${{ env.TRIVY_SEVERITY }}
+          ignore-unfixed: true
+          exit-code: '1'
+          skip-dirs: ${{ env.TRIVY_SKIP_DIRS }}
+          format: table
 
   sbom:
     name: SBOM
@@ -93,7 +105,7 @@ jobs:
           load: true
           tags: veritalent-api:ci
 
-      - name: Trivy container scan
+      - name: Generate container SARIF
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: veritalent-api:ci
